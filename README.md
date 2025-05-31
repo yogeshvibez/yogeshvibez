@@ -52,8 +52,7 @@
 ---
 
 ### 🎯 Goals for 2025
-
-- 🧠 Build a **local LLM** from scratch using Colab & free GPUs  
+ 
 - 🛠️ Make my **Telegram bots more powerful and efficient**  
 - 🌍 Create **useful tools** that others can run easily  
 - 🎓 Keep learning & sharing everything I discover  
@@ -81,5 +80,3 @@
 > 🧩 “Code. Learn. Break. Fix. Repeat.” – That's my vibe.
 
 ---
-
-<!-- GitHub profile README built by ChatGPT for @yogeshvibez -->
