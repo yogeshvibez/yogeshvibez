@@ -18,13 +18,13 @@
 ### 🌐 Connect with Me
 
 <p align="left">
-  <a href="https://huggingface.co/yogeshvibez" target="_blank">
+  <a target="_blank" href="https://huggingface.co/yogeshvibez" target="_blank">
     <img src="https://img.shields.io/badge/HuggingFace-%23FFD21F.svg?style=for-the-badge&logo=huggingface&logoColor=black" alt="HuggingFace Profile"/>
   </a>
-  <a href="https://instagram.com/yogeshvibez" target="_blank">
+  <a target="_blank" href="https://instagram.com/yogeshvibez" target="_blank">
     <img src="https://img.shields.io/badge/Instagram-%23E4405F.svg?style=for-the-badge&logo=instagram&logoColor=white" alt="Instagram Profile"/>
   </a>
-  <a href="https://x.com/all4outgaming" target="_blank">
+  <a target="_blank" href="https://x.com/all4outgaming" target="_blank">
     <img src="https://img.shields.io/badge/X-%231da1f2.svg?style=for-the-badge&logo=x&logoColor=white" alt="X (Twitter) Profile"/>
   </a>
 </p>
