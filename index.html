@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World - Premium Animation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Orbitron:wght@400;700&family=Dancing+Script:wght@400;700&family=Raleway:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Define custom fonts for Tailwind */
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'cinzel': ['Cinzel Decorative', 'serif'],
+                        'orbitron': ['Orbitron', 'sans-serif'],
+                        'dancing': ['Dancing Script', 'cursive'],
+                        'raleway': ['Raleway', 'sans-serif'],
+                        'roboto-mono': ['Roboto Mono', 'monospace'],
+                    },
+                    animation: {
+                        'gradient-bg': 'gradient-bg 15s ease infinite',
+                        'text-glow': 'text-glow 2s ease-in-out infinite alternate',
+                        'type-char-in': 'type-char-in 0.5s ease forwards',
+                        'fade-in-page': 'fade-in-page 1s ease-out forwards',
+                        'blink-cursor': 'blink-cursor 0.7s infinite',
+                    },
+                    keyframes: {
+                        'gradient-bg': {
+                            '0%, 100%': { backgroundPosition: '0% 50%' },
+                            '50%': { backgroundPosition: '100% 50%' },
+                        },
+                        'text-glow': {
+                            '0%': { textShadow: '0 0 5px rgba(255,255,255,0.3), 0 0 10px rgba(0,191,255,0.3), 0 0 15px rgba(0,191,255,0.3)' },
+                            '100%': { textShadow: '0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(0,191,255,0.5), 0 0 30px rgba(0,191,255,0.5)' },
+                        },
+                        'type-char-in': {
+                            '0%': { opacity: '0', transform: 'translateY(-20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        'fade-in-page': {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        'blink-cursor': {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0' },
+                        }
+                    }
+                }
+            }
+        }
+
+        /* General body styles */
+        body {
+            font-family: 'Raleway', sans-serif; /* Default font */
+            background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1a1a2e);
+            background-size: 400% 400%;
+            animation: gradient-bg 15s ease infinite;
+            opacity: 0; /* Start with page invisible for fade-in */
+            animation: fade-in-page 1s ease-out 0.5s forwards; /* Delay fade-in slightly */
+        }
+
+        /* Styling for individual characters in "Hello World" */
+        .char-animated {
+            display: inline-block; /* Allows transform */
+            opacity: 0; /* Start hidden */
+            animation: type-char-in 0.3s ease forwards;
+        }
+
+        /* Styling for the typing cursor */
+        .typing-cursor {
+            display: inline-block;
+            animation: blink-cursor 0.7s infinite;
+            color: #00BFFF; /* Deep sky blue for cursor */
+        }
+
+        /* Container for the text elements */
+        .text-container {
+            min-height: 150px; /* Reserve space to prevent layout shift */
+        }
+        
+        /* Specific styling for Hello World text after typing */
+        #helloText.typed {
+            animation: text-glow 2s ease-in-out infinite alternate;
+        }
+    </style>
+</head>
+<body class="text-white min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
+
+    <div class="text-container text-center">
+        <div id="helloText" class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-8 transition-all duration-500">
+            </div>
+        <div id="urlText" class="text-xl sm:text-2xl md:text-3xl font-roboto-mono text-sky-300">
+            </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const helloTextElement = document.getElementById('helloText');
+            const urlTextElement = document.getElementById('urlText');
+
+            const helloString = "Hello World";
+            const urlString = "yogeshvibez.dpdns.org";
+            
+            // Fonts for "Hello World" - cycled per character
+            const helloFonts = ['font-cinzel', 'font-orbitron', 'font-dancing', 'font-raleway'];
+            // Font for the URL
+            const urlFont = 'font-roboto-mono';
+
+            const typingSpeed = 150; // milliseconds per character
+            const interLetterDelay = 50; // additional delay for animated chars
+            const pauseAfterHello = 1000; // milliseconds
+            const pauseAfterUrl = 2000; // milliseconds
+
+            // Function to type text character by character with animation and font cycling
+            function typeTextAnimated(element, text, fonts, charAnimationDelay, callback) {
+                let charIndex = 0;
+                let fontIndex = 0;
+                
+                // Add cursor element
+                const cursorSpan = document.createElement('span');
+                cursorSpan.classList.add('typing-cursor');
+                cursorSpan.textContent = '|';
+                element.appendChild(cursorSpan);
+
+                function typeChar() {
+                    if (charIndex < text.length) {
+                        // Remove cursor before adding new char
+                        element.removeChild(cursorSpan);
+
+                        const charSpan = document.createElement('span');
+                        charSpan.textContent = text[charIndex];
+                        
+                        // Apply font from the cycle
+                        if (fonts && fonts.length > 0) {
+                            charSpan.classList.add(fonts[fontIndex % fonts.length]);
+                        }
+                        
+                        // Apply character animation class
+                        charSpan.classList.add('char-animated');
+                        charSpan.style.animationDelay = `${charIndex * interLetterDelay / 1000}s`;
+
+
+                        element.appendChild(charSpan);
+                        
+                        // Re-add cursor after new char
+                        element.appendChild(cursorSpan);
+
+                        charIndex++;
+                        fontIndex++;
+                        setTimeout(typeChar, typingSpeed);
+                    } else {
+                        // Typing finished, remove cursor after a small delay
+                        setTimeout(() => {
+                            if (element.contains(cursorSpan)) {
+                                element.removeChild(cursorSpan);
+                            }
+                            element.classList.add('typed'); // Add class for post-typing animation
+                            if (callback) callback();
+                        }, 500);
+                    }
+                }
+                typeChar();
+            }
+
+            // Function to type text character by character (simpler, for URL)
+            function typeTextSimple(element, text, fontClass, callback) {
+                let charIndex = 0;
+                
+                const contentSpan = document.createElement('span');
+                if (fontClass) {
+                    contentSpan.classList.add(fontClass);
+                }
+                element.appendChild(contentSpan);
+
+                const cursorSpan = document.createElement('span');
+                cursorSpan.classList.add('typing-cursor');
+                cursorSpan.textContent = '|';
+                element.appendChild(cursorSpan);
+
+
+                function typeChar() {
+                    if (charIndex < text.length) {
+                        contentSpan.textContent += text[charIndex];
+                        charIndex++;
+                        setTimeout(typeChar, typingSpeed / 2); // URL types a bit faster
+                    } else {
+                         setTimeout(() => {
+                            if (element.contains(cursorSpan)) {
+                                element.removeChild(cursorSpan);
+                            }
+                            if (callback) callback();
+                        }, 500);
+                    }
+                }
+                typeChar();
+            }
+
+            // Start the sequence
+            // Wait for page fade-in to mostly complete before starting typing
+            setTimeout(() => {
+                typeTextAnimated(helloTextElement, helloString, helloFonts, interLetterDelay, () => {
+                    // After "Hello World" is typed, add glow animation
+                    helloTextElement.classList.add('animate-text-glow');
+                    setTimeout(() => {
+                        typeTextSimple(urlTextElement, urlString, urlFont, () => {
+                            // All typing finished
+                            console.log("All typing complete.");
+                            // Optionally, add a final blinking cursor to the URL
+                            const finalCursor = document.createElement('span');
+                            finalCursor.classList.add('typing-cursor');
+                            finalCursor.textContent = '|';
+                            urlTextElement.appendChild(finalCursor);
+                        });
+                    }, pauseAfterHello);
+                });
+            }, 1500); // Start typing after 1.5s (allows page fade-in)
+        });
+    </script>
+
+</body>
+</html>
