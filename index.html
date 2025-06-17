@@ -3,223 +3,1191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World - Premium Animation</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Orbitron:wght@400;700&family=Dancing+Script:wght@400;700&family=Raleway:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <title>Yogesh Yadav | Cyber Portfolio</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Define custom fonts for Tailwind */
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'cinzel': ['Cinzel Decorative', 'serif'],
-                        'orbitron': ['Orbitron', 'sans-serif'],
-                        'dancing': ['Dancing Script', 'cursive'],
-                        'raleway': ['Raleway', 'sans-serif'],
-                        'roboto-mono': ['Roboto Mono', 'monospace'],
-                    },
-                    animation: {
-                        'gradient-bg': 'gradient-bg 15s ease infinite',
-                        'text-glow': 'text-glow 2s ease-in-out infinite alternate',
-                        'type-char-in': 'type-char-in 0.5s ease forwards',
-                        'fade-in-page': 'fade-in-page 1s ease-out forwards',
-                        'blink-cursor': 'blink-cursor 0.7s infinite',
-                    },
-                    keyframes: {
-                        'gradient-bg': {
-                            '0%, 100%': { backgroundPosition: '0% 50%' },
-                            '50%': { backgroundPosition: '100% 50%' },
-                        },
-                        'text-glow': {
-                            '0%': { textShadow: '0 0 5px rgba(255,255,255,0.3), 0 0 10px rgba(0,191,255,0.3), 0 0 15px rgba(0,191,255,0.3)' },
-                            '100%': { textShadow: '0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(0,191,255,0.5), 0 0 30px rgba(0,191,255,0.5)' },
-                        },
-                        'type-char-in': {
-                            '0%': { opacity: '0', transform: 'translateY(-20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        },
-                        'fade-in-page': {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' },
-                        },
-                        'blink-cursor': {
-                            '0%, 100%': { opacity: '1' },
-                            '50%': { opacity: '0' },
-                        }
-                    }
-                }
+        /* Enhanced CSS with more animations and visual effects */
+        :root {
+            --primary: #2EC4B6;
+            --secondary: #011627;
+            --accent: #FF9F1C;
+            --light: #FDFFFC;
+            --dark: #1A1A2E;
+            --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            --glow: 0 0 15px rgba(46, 196, 182, 0.5);
+            --neon-glow: 0 0 15px var(--primary), 0 0 30px rgba(46, 196, 182, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--light);
+            background: linear-gradient(135deg, var(--secondary), var(--dark));
+            background-attachment: fixed;
+            overflow-x: hidden;
+            perspective: 1000px;
+        }
+
+        /* Particle canvas */
+        #particlesCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Enhanced header with 3D effect */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(1, 22, 39, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            transform: translateY(0) translateZ(0);
+            transition: transform 0.3s ease-out, box-shadow 0.3s ease;
+            transform-style: preserve-3d;
+        }
+
+        header.hidden {
+            transform: translateY(-100%) translateZ(0);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent);
+            perspective: 500px;
+        }
+
+        .logo i {
+            margin-right: 10px;
+            color: var(--primary);
+            animation: pulse 2s infinite, rotate3d 8s infinite linear;
+            transform-style: preserve-3d;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--light);
+            font-size: 1.2rem;
+            text-decoration: none;
+            transition: var(--transition);
+            position: relative;
+            display: flex;
+            align-items: center;
+            transform-style: preserve-3d;
+        }
+
+        .nav-links a i {
+            margin-right: 8px;
+            transition: var(--transition);
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+            text-shadow: var(--neon-glow);
+        }
+
+        .nav-links a:hover i {
+            transform: scale(1.2) rotateY(15deg);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: var(--primary);
+            transition: var(--transition);
+            box-shadow: var(--glow);
+            transform: translateZ(10px);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .hamburger {
+            display: none;
+            cursor: pointer;
+            z-index: 1001;
+            transform: translateZ(0);
+        }
+
+        /* Enhanced scroll progress bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: transparent;
+            z-index: 1001;
+            perspective: 100px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            width: 0%;
+            transition: width 0.2s ease-out;
+            box-shadow: var(--neon-glow);
+            transform: translateZ(5px);
+        }
+
+        /* Enhanced hero section with 3D effects */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            perspective: 1000px;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(46, 196, 182, 0.1) 0%, rgba(1, 22, 39, 0) 70%);
+            z-index: -1;
+            animation: rotate 20s linear infinite;
+            transform-style: preserve-3d;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            transform-style: preserve-3d;
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: float 3s ease-in-out infinite, text-glitch 5s infinite alternate, neon-pulse 4s infinite;
+            transform: translateZ(30px);
+            text-shadow: var(--neon-glow);
+        }
+
+        .typing-container {
+            font-size: 1.8rem;
+            height: 2.5rem;
+            margin-bottom: 2rem;
+            perspective: 500px;
+        }
+
+        .typing {
+            font-weight: 600;
+            color: var(--primary);
+            overflow: hidden;
+            border-right: .15em solid var(--accent);
+            white-space: nowrap;
+            animation: typing 4s steps(40, end) infinite, blink-caret .75s step-end infinite, float-text 3s infinite alternate;
+            text-shadow: var(--neon-glow);
+            display: inline-block;
+            transform: translateZ(20px);
+        }
+
+        .hero p {
+            max-width: 600px;
+            font-size: 1.2rem;
+            animation: fadeInUp 1s ease-out, text-pulse 4s infinite;
+            transform: translateZ(15px);
+        }
+
+        /* Enhanced sections with parallax effect */
+        section {
+            padding: 6rem 10%;
+            position: relative;
+            opacity: 0;
+            transform: translateY(30px) translateZ(0);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+            transform-style: preserve-3d;
+        }
+
+        section.visible {
+            opacity: 1;
+            transform: translateY(0) translateZ(0);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: var(--accent);
+            position: relative;
+            text-shadow: 0 0 15px rgba(255, 159, 28, 0.5);
+            transform: translateZ(40px);
+            animation: title-glitch 10s infinite alternate;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%) translateZ(10px);
+            width: 80px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+            box-shadow: var(--neon-glow);
+            animation: width-pulse 3s infinite;
+        }
+
+        /* Enhanced about section */
+        .about-content {
+            max-width: 900px;
+            margin: 0 auto;
+            font-size: 1.1rem;
+            text-align: center;
+            line-height: 1.8;
+            transform-style: preserve-3d;
+        }
+
+        .about-content p {
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.8s ease-out;
+            animation-fill-mode: both;
+            transform: translateZ(20px);
+        }
+
+        .about-content p:nth-child(1) { animation-delay: 0.2s; }
+        .about-content p:nth-child(2) { animation-delay: 0.4s; }
+
+        /* Enhanced projects section with interactive 3D cards */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            transform-style: preserve-3d;
+        }
+
+        .project-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 2rem;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            transform: translateZ(0);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--primary), var(--accent), var(--primary));
+            z-index: -1;
+            border-radius: 17px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            animation: border-glow 2s linear infinite;
+            background-size: 400% 400%;
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px) rotateX(5deg) rotateY(5deg) scale(1.03) translateZ(20px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), var(--neon-glow);
+            border-color: transparent;
+        }
+
+        .project-card:hover::before {
+            opacity: 1;
+        }
+
+        .project-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            transform: translateZ(30px);
+        }
+
+        .project-card h3 i {
+            margin-right: 10px;
+            color: var(--primary);
+            transition: var(--transition);
+            transform: translateZ(10px);
+        }
+
+        .project-card:hover h3 i {
+            transform: rotate(15deg) scale(1.2) translateZ(15px);
+        }
+
+        .tech-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            transform: translateZ(10px);
+        }
+
+        .tech {
+            background: rgba(46, 196, 182, 0.2);
+            color: var(--primary);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            transform: translateZ(10px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .tech:hover {
+            transform: translateY(-3px) scale(1.1) translateZ(15px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3), var(--glow);
+            background: rgba(255, 159, 28, 0.3);
+        }
+
+        /* Enhanced stats section */
+        .stats-container {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            transform-style: preserve-3d;
+        }
+
+        .stats-container img {
+            max-width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: var(--transition);
+            transform: translateZ(30px);
+        }
+
+        .stats-container img:hover {
+            transform: scale(1.03) rotateZ(1deg) translateZ(40px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4), var(--neon-glow);
+        }
+
+        /* Enhanced goals section */
+        .goals-list {
+            max-width: 700px;
+            margin: 0 auto;
+            transform-style: preserve-3d;
+        }
+
+        .goal {
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transform: translateZ(20px);
+            perspective: 500px;
+        }
+
+        .goal i {
+            margin-right: 15px;
+            color: var(--primary);
+            font-size: 1.3rem;
+            transition: var(--transition);
+            transform: translateZ(10px);
+        }
+
+        .goal:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(10px) rotateY(5deg) translateZ(30px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25), var(--glow);
+        }
+
+        .goal:hover i {
+            transform: rotate(20deg) scale(1.2) translateZ(20px);
+            color: var(--accent);
+        }
+
+        /* Enhanced tools section */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 1.5rem;
+            max-width: 800px;
+            margin: 0 auto;
+            transform-style: preserve-3d;
+        }
+
+        .tool {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 1.2rem;
+            text-align: center;
+            transition: var(--transition);
+            transform-style: preserve-3d;
+            perspective: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateZ(0);
+        }
+
+        .tool i {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+            transition: var(--transition);
+            transform: translateZ(10px);
+        }
+
+        .tool span {
+            display: block;
+            transition: var(--transition);
+            transform: translateZ(10px);
+        }
+
+        .tool:hover {
+            transform: translateY(-10px) rotateY(15deg) rotateX(5deg) translateZ(30px);
+            background: rgba(46, 196, 182, 0.2);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2), var(--neon-glow);
+        }
+
+        .tool:hover i {
+            transform: scale(1.2) rotateY(-15deg) rotateX(5deg) translateZ(20px);
+            color: var(--accent);
+        }
+
+        /* Enhanced vibes section */
+        .vibes-section {
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+        }
+
+        .gifs {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-top: 2rem;
+            transform-style: preserve-3d;
+        }
+
+        .gif-container {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            transition: var(--transition);
+            transform: translateZ(20px);
+            perspective: 800px;
+        }
+
+        .gif-container img {
+            max-width: 100%;
+            transition: var(--transition);
+            display: block;
+            transform: translateZ(0);
+        }
+
+        .gif-container:hover {
+            transform: translateY(-10px) scale(1.05) rotateZ(1deg) translateZ(40px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), var(--neon-glow);
+        }
+
+        .gif-container:hover img {
+            transform: scale(1.1);
+        }
+
+        blockquote {
+            max-width: 800px;
+            margin: 3rem auto 0;
+            padding: 2rem;
+            text-align: center;
+            font-style: italic;
+            font-size: 1.4rem;
+            background: rgba(255, 159, 28, 0.1);
+            border-radius: 15px;
+            position: relative;
+            transition: var(--transition);
+            transform: translateZ(50px);
+            perspective: 600px;
+        }
+
+        blockquote:hover {
+            transform: scale(1.02) rotateX(2deg) rotateY(2deg) translateZ(60px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), var(--neon-glow);
+        }
+
+        blockquote::before, blockquote::after {
+            content: '"';
+            font-size: 3rem;
+            color: var(--accent);
+            opacity: 0.3;
+            position: absolute;
+            animation: quote-pulse 4s infinite;
+        }
+
+        blockquote::before {
+            top: 10px;
+            left: 20px;
+        }
+
+        blockquote::after {
+            bottom: 10px;
+            right: 20px;
+        }
+
+        /* Enhanced back to top button */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(20px) translateZ(0);
+            transition: var(--transition);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), var(--glow);
+            z-index: 999;
+            perspective: 200px;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            transform: translateY(0) translateZ(0);
+        }
+
+        .back-to-top:hover {
+            background: var(--accent);
+            transform: translateY(-5px) rotateY(15deg) translateZ(20px);
+            box-shadow: 0 8px 20px rgba(255, 159, 28, 0.4), var(--neon-glow);
+        }
+
+        /* Enhanced footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(1, 22, 39, 0.9);
+            backdrop-filter: blur(10px);
+            margin-top: 4rem;
+            position: relative;
+            transform: translateZ(0);
+        }
+
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            animation: border-glow 3s infinite linear;
+            background-size: 200% 100%;
+        }
+
+        /* New animations */
+        @keyframes rotate3d {
+            0% { transform: rotateY(0) rotateX(0); }
+            25% { transform: rotateY(90deg) rotateX(10deg); }
+            50% { transform: rotateY(180deg) rotateX(0); }
+            75% { transform: rotateY(270deg) rotateX(10deg); }
+            100% { transform: rotateY(360deg) rotateX(0); }
+        }
+
+        @keyframes neon-pulse {
+            0%, 100% { text-shadow: var(--neon-glow); }
+            50% { text-shadow: 0 0 30px var(--primary), 0 0 60px rgba(46, 196, 182, 0.5); }
+        }
+
+        @keyframes text-pulse {
+            0%, 100% { transform: translateZ(15px); }
+            50% { transform: translateZ(20px); }
+        }
+
+        @keyframes title-glitch {
+            0% { transform: translateZ(40px); }
+            1% { transform: translateZ(40px) translateX(3px) skewX(5deg); }
+            2% { transform: translateZ(40px) translateX(-2px) skewX(-3deg); }
+            3% { transform: translateZ(40px); }
+        }
+
+        @keyframes width-pulse {
+            0%, 100% { width: 80px; }
+            50% { width: 120px; }
+        }
+
+        @keyframes quote-pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        @keyframes float-text {
+            0%, 100% { transform: translateY(0) translateZ(20px); }
+            50% { transform: translateY(-5px) translateZ(25px); }
+        }
+
+        @keyframes particle-float {
+            0% { transform: translateY(0) translateX(0); }
+            100% { transform: translateY(-100vh) translateX(20px); }
+        }
+
+        /* Existing animations */
+        @keyframes float {
+            0% { transform: translateY(0) translateZ(30px); }
+            50% { transform: translateY(-15px) translateZ(40px); }
+            100% { transform: translateY(0) translateZ(30px); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes typing {
+            0% { width: 0 }
+            25% { width: 100% }
+            75% { width: 100% }
+            100% { width: 0 }
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: var(--accent) }
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes border-glow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
-        /* General body styles */
-        body {
-            font-family: 'Raleway', sans-serif; /* Default font */
-            background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1a1a2e);
-            background-size: 400% 400%;
-            animation: gradient-bg 15s ease infinite;
-            opacity: 0; /* Start with page invisible for fade-in */
-            animation: fade-in-page 1s ease-out 0.5s forwards; /* Delay fade-in slightly */
+        @keyframes text-glitch {
+            0% { text-shadow: 0 0 2px rgba(46, 196, 182, 0.3); }
+            2% { text-shadow: 3px 0 2px rgba(255, 0, 0, 0.5), -3px 0 2px rgba(0, 255, 255, 0.5); }
+            3% { text-shadow: none; }
+            100% { text-shadow: 0 0 2px rgba(46, 196, 182, 0.3); }
         }
 
-        /* Styling for individual characters in "Hello World" */
-        .char-animated {
-            display: inline-block; /* Allows transform */
-            opacity: 0; /* Start hidden */
-            animation: type-char-in 0.3s ease forwards;
+        /* Responsive design */
+        @media (max-width: 992px) {
+            .section-title {
+                font-size: 2.2rem;
+            }
+
+            h1 {
+                font-size: 3rem;
+            }
         }
 
-        /* Styling for the typing cursor */
-        .typing-cursor {
-            display: inline-block;
-            animation: blink-cursor 0.7s infinite;
-            color: #00BFFF; /* Deep sky blue for cursor */
+        @media (max-width: 768px) {
+            .hamburger {
+                display: block;
+            }
+
+            .nav-links {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                height: 100vh;
+                flex-direction: column;
+                justify-content: center;
+                background: rgba(1, 22, 39, 0.98);
+                width: 70%;
+                text-align: center;
+                padding: 2rem 0;
+                transition: var(--transition);
+                backdrop-filter: blur(10px);
+                z-index: 1000;
+                transform-style: preserve-3d;
+            }
+
+            .nav-links.active {
+                right: 0;
+                transform: translateZ(0);
+            }
+
+            .stats-container {
+                flex-direction: column;
+                align-items: center;
+            }
         }
 
-        /* Container for the text elements */
-        .text-container {
-            min-height: 150px; /* Reserve space to prevent layout shift */
-        }
-        
-        /* Specific styling for Hello World text after typing */
-        #helloText.typed {
-            animation: text-glow 2s ease-in-out infinite alternate;
+        @media (max-width: 576px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .typing-container {
+                font-size: 1.4rem;
+            }
+
+            section {
+                padding: 4rem 5%;
+            }
+
+            .gifs {
+                flex-direction: column;
+                align-items: center;
+            }
         }
     </style>
 </head>
-<body class="text-white min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
+<body>
+    <!-- Particle Canvas -->
+    <canvas id="particlesCanvas"></canvas>
 
-    <div class="text-container text-center">
-        <div id="helloText" class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-8 transition-all duration-500">
+    <!-- Scroll progress bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Header -->
+    <header id="mainHeader">
+        <div class="logo">
+            <i class="fas fa-code"></i>
+            <span>Yogesh</span>
+        </div>
+        <nav>
+            <div class="hamburger" id="hamburger">
+                <i class="fas fa-bars"></i>
             </div>
-        <div id="urlText" class="text-xl sm:text-2xl md:text-3xl font-roboto-mono text-sky-300">
+            <div class="nav-links" id="navLinks">
+                <a href="https://instagram.com/yogeshvibez" target="_blank">
+                    <i class="fab fa-instagram"></i> Instagram
+                </a>
+                <a href="https://github.com/yogeshvibez" target="_blank">
+                    <i class="fab fa-github"></i> GitHub
+                </a>
+                <a href="https://huggingface.co/yogeshvibez" target="_blank">
+                    <i class="fab fa-hubspot"></i> HuggingFace
+                </a>
             </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Yogesh Yadav</h1>
+            <div class="typing-container">
+                <span class="typing">Full-stack Dev | Python Lover | Linux User</span>
+            </div>
+            <p>Building AI and Bots everyday • Here to Break and Build Cool Stuff</p>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about">
+        <h2 class="section-title">About Me</h2>
+        <div class="about-content">
+            <p>
+                I'm passionate about <strong>AI, Web Dev, Python, and Linux</strong>.
+                Currently working on <strong>Telegram Flood Bots</strong>, <strong>AI Wrappers</strong>,
+                <strong>Web Apps</strong>, and <strong>Network Tools</strong>.
+                Always experimenting with new ideas & pushing system limits.
+            </p>
+            <p>
+                Tools of the trade: <code>Python</code>, <code>Linux</code>, <code>JS</code>,
+                <code>ThreadPoolExecutor</code>, <code>LLMs</code>, <code>Terminals</code>,
+                <code>Docker</code>, and <code>Networking</code>.
+            </p>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects">
+        <h2 class="section-title">Currently Hacking On</h2>
+        <div class="projects-grid">
+            <div class="project-card">
+                <h3><i class="fas fa-brain"></i> Universal AI Wrapper</h3>
+                <p>OpenAI-compatible multi-key fallback API tool</p>
+                <div class="tech-list">
+                    <span class="tech">Python</span>
+                    <span class="tech">FastAPI</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <h3><i class="fas fa-mobile-alt"></i> Telegram Flood Bot</h3>
+                <p>Custom UDP/TCP/HTTP DoS bot with command control</p>
+                <div class="tech-list">
+                    <span class="tech">Python</span>
+                    <span class="tech">Threading</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <h3><i class="fas fa-laptop-code"></i> Web Dev Tools</h3>
+                <p>Building responsive, cool UIs & APIs</p>
+                <div class="tech-list">
+                    <span class="tech">HTML</span>
+                    <span class="tech">CSS</span>
+                    <span class="tech">JS</span>
+                    <span class="tech">Flask</span>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <h3><i class="fas fa-server"></i> System Tweaks</h3>
+                <p>Linux system mods & networking tools</p>
+                <div class="tech-list">
+                    <span class="tech">Bash</span>
+                    <span class="tech">Python</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section id="stats">
+        <h2 class="section-title">GitHub Stats</h2>
+        <div class="stats-container">
+            <img src="https://github-readme-stats.vercel.app/api?username=yogeshvibez&show_icons=true&theme=tokyonight&count_private=true"
+                 alt="GitHub Stats">
+            <img src="https://github-readme-streak-stats.herokuapp.com/?user=yogeshvibez&theme=tokyonight"
+                 alt="GitHub Streak">
+        </div>
+    </section>
+
+    <!-- Goals Section -->
+    <section id="goals">
+        <h2 class="section-title">Goals for 2025</h2>
+        <div class="goals-list">
+            <div class="goal">
+                <i class="fas fa-tools"></i> Make my Telegram bots more powerful and efficient
+            </div>
+            <div class="goal">
+                <i class="fas fa-globe"></i> Create useful tools that others can run easily
+            </div>
+            <div class="goal">
+                <i class="fas fa-graduation-cap"></i> Keep learning & sharing everything I discover
+            </div>
+        </div>
+    </section>
+
+    <!-- Tools Section -->
+    <section id="tools">
+        <h2 class="section-title">Tech Stack</h2>
+        <div class="tools-grid">
+            <div class="tool">
+                <i class="fab fa-python"></i>
+                <span>Python</span>
+            </div>
+            <div class="tool">
+                <i class="fab fa-linux"></i>
+                <span>Linux</span>
+            </div>
+            <div class="tool">
+                <i class="fab fa-html5"></i>
+                <span>HTML</span>
+            </div>
+            <div class="tool">
+                <i class="fab fa-css3-alt"></i>
+                <span>CSS</span>
+            </div>
+            <div class="tool">
+                <i class="fab fa-js"></i>
+                <span>JavaScript</span>
+            </div>
+            <div class="tool">
+                <i class="fab fa-github"></i>
+                <span>GitHub</span>
+            </div>
+            <div class="tool">
+                <i class="fas fa-terminal"></i>
+                <span>Terminal</span>
+            </div>
+            <div class="tool">
+                <i class="fab fa-docker"></i>
+                <span>Docker</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Vibes Section -->
+    <section id="vibes" class="vibes-section">
+        <h2 class="section-title">Just Vibes...</h2>
+        <div class="gifs">
+            <div class="gif-container">
+                <img src="https://media.giphy.com/media/hvRJCLFzcasrR4ia7z/giphy.gif" alt="Coding GIF" width="280">
+            </div>
+            <div class="gif-container">
+                <img src="https://media.giphy.com/media/qgQUggAC3Pfv687qPC/giphy.gif" alt="Developer GIF" width="280">
+            </div>
+            <div class="gif-container">
+                <img src="https://media.giphy.com/media/SWoSkN6DxTszqIKEqv/giphy.gif" alt="Programming GIF" width="280">
+            </div>
+        </div>
+
+        <blockquote>
+            "Code. Learn. Break. Fix. Repeat." – That's my vibe.
+        </blockquote>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2023 Yogesh Yadav | Keep Breaking & Building</p>
+    </footer>
+
+    <!-- Back to top button -->
+    <div class="back-to-top" id="backToTop">
+        <i class="fas fa-arrow-up"></i>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const helloTextElement = document.getElementById('helloText');
-            const urlTextElement = document.getElementById('urlText');
+        // Particle system for background
+        const canvas = document.getElementById('particlesCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-            const helloString = "Hello World";
-            const urlString = "yogeshvibez.dpdns.org";
-            
-            // Fonts for "Hello World" - cycled per character
-            const helloFonts = ['font-cinzel', 'font-orbitron', 'font-dancing', 'font-raleway'];
-            // Font for the URL
-            const urlFont = 'font-roboto-mono';
+        let particles = [];
+        const particleCount = 150;
 
-            const typingSpeed = 150; // milliseconds per character
-            const interLetterDelay = 50; // additional delay for animated chars
-            const pauseAfterHello = 1000; // milliseconds
-            const pauseAfterUrl = 2000; // milliseconds
-
-            // Function to type text character by character with animation and font cycling
-            function typeTextAnimated(element, text, fonts, charAnimationDelay, callback) {
-                let charIndex = 0;
-                let fontIndex = 0;
-                
-                // Add cursor element
-                const cursorSpan = document.createElement('span');
-                cursorSpan.classList.add('typing-cursor');
-                cursorSpan.textContent = '|';
-                element.appendChild(cursorSpan);
-
-                function typeChar() {
-                    if (charIndex < text.length) {
-                        // Remove cursor before adding new char
-                        element.removeChild(cursorSpan);
-
-                        const charSpan = document.createElement('span');
-                        charSpan.textContent = text[charIndex];
-                        
-                        // Apply font from the cycle
-                        if (fonts && fonts.length > 0) {
-                            charSpan.classList.add(fonts[fontIndex % fonts.length]);
-                        }
-                        
-                        // Apply character animation class
-                        charSpan.classList.add('char-animated');
-                        charSpan.style.animationDelay = `${charIndex * interLetterDelay / 1000}s`;
-
-
-                        element.appendChild(charSpan);
-                        
-                        // Re-add cursor after new char
-                        element.appendChild(cursorSpan);
-
-                        charIndex++;
-                        fontIndex++;
-                        setTimeout(typeChar, typingSpeed);
-                    } else {
-                        // Typing finished, remove cursor after a small delay
-                        setTimeout(() => {
-                            if (element.contains(cursorSpan)) {
-                                element.removeChild(cursorSpan);
-                            }
-                            element.classList.add('typed'); // Add class for post-typing animation
-                            if (callback) callback();
-                        }, 500);
-                    }
-                }
-                typeChar();
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.speedY = Math.random() * 1 - 0.5;
+                this.color = `rgba(46, 196, 182, ${Math.random() * 0.5 + 0.1})`;
+                this.opacity = Math.random() * 0.5 + 0.1;
             }
 
-            // Function to type text character by character (simpler, for URL)
-            function typeTextSimple(element, text, fontClass, callback) {
-                let charIndex = 0;
-                
-                const contentSpan = document.createElement('span');
-                if (fontClass) {
-                    contentSpan.classList.add(fontClass);
-                }
-                element.appendChild(contentSpan);
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
 
-                const cursorSpan = document.createElement('span');
-                cursorSpan.classList.add('typing-cursor');
-                cursorSpan.textContent = '|';
-                element.appendChild(cursorSpan);
-
-
-                function typeChar() {
-                    if (charIndex < text.length) {
-                        contentSpan.textContent += text[charIndex];
-                        charIndex++;
-                        setTimeout(typeChar, typingSpeed / 2); // URL types a bit faster
-                    } else {
-                         setTimeout(() => {
-                            if (element.contains(cursorSpan)) {
-                                element.removeChild(cursorSpan);
-                            }
-                            if (callback) callback();
-                        }, 500);
-                    }
-                }
-                typeChar();
+                if (this.x > canvas.width || this.x < 0) this.speedX = -this.speedX;
+                if (this.y > canvas.height || this.y < 0) this.speedY = -this.speedY;
             }
 
-            // Start the sequence
-            // Wait for page fade-in to mostly complete before starting typing
-            setTimeout(() => {
-                typeTextAnimated(helloTextElement, helloString, helloFonts, interLetterDelay, () => {
-                    // After "Hello World" is typed, add glow animation
-                    helloTextElement.classList.add('animate-text-glow');
-                    setTimeout(() => {
-                        typeTextSimple(urlTextElement, urlString, urlFont, () => {
-                            // All typing finished
-                            console.log("All typing complete.");
-                            // Optionally, add a final blinking cursor to the URL
-                            const finalCursor = document.createElement('span');
-                            finalCursor.classList.add('typing-cursor');
-                            finalCursor.textContent = '|';
-                            urlTextElement.appendChild(finalCursor);
-                        });
-                    }, pauseAfterHello);
-                });
-            }, 1500); // Start typing after 1.5s (allows page fade-in)
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.opacity;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function createParticles() {
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+
+                // Draw connections
+                for (let j = i; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 100) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(46, 196, 182, ${0.1 * (1 - distance/100)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+
+        // Mobile menu toggle
+        document.getElementById('hamburger').addEventListener('click', () => {
+            document.getElementById('navLinks').classList.toggle('active');
+            document.querySelector('.hamburger i').classList.toggle('fa-bars');
+            document.querySelector('.hamburger i').classList.toggle('fa-times');
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                if(this.hash !== "#") {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+                document.querySelector('.nav-links').classList.remove('active');
+                document.querySelector('.hamburger i').classList.remove('fa-times');
+                document.querySelector('.hamburger i').classList.add('fa-bars');
+            });
+        });
+
+        // Header scroll effects
+        let lastScrollTop = 0;
+        const header = document.getElementById('mainHeader');
+
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+            // Header shadow
+            header.style.boxShadow = scrollTop > 10 ?
+                '0 4px 30px rgba(0, 0, 0, 0.2)' :
+                '0 4px 30px rgba(0, 0, 0, 0.1)';
+
+            // Hide header on scroll down
+            if (scrollTop > lastScrollTop && scrollTop > 100) {
+                header.classList.add('hidden');
+            } else {
+                header.classList.remove('hidden');
+            }
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+
+            // Progress bar
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById("progressBar").style.width = scrolled + "%";
+
+            // Back to top button
+            const backToTop = document.getElementById('backToTop');
+            if (scrollTop > 500) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+
+            // Section animations
+            const sections = document.querySelectorAll('section');
+            sections.forEach(section => {
+                const sectionTop = section.getBoundingClientRect().top;
+                const windowHeight = window.innerHeight;
+
+                if(sectionTop < windowHeight * 0.75) {
+                    section.classList.add('visible');
+                }
+            });
+        });
+
+        // Back to top functionality
+        document.getElementById('backToTop').addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // 3D hover effect for project cards
+        const projectCards = document.querySelectorAll('.project-card');
+        projectCards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const rotateY = (x - centerX) / 15;
+                const rotateX = (centerY - y) / 15;
+
+                card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px) scale(1.03)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(-10px) rotateX(5deg) rotateY(5deg) scale(1.03) translateZ(20px)';
+            });
+        });
+
+        // Initialize everything
+        window.addEventListener('load', () => {
+            // Initialize particles
+            createParticles();
+            animateParticles();
+
+            // Initialize animations
+            document.querySelector('.hero').classList.add('visible');
+
+            // Initialize section visibility
+            const sections = document.querySelectorAll('section');
+            sections.forEach((section, index) => {
+                setTimeout(() => {
+                    section.classList.add('visible');
+                }, 300 * index);
+            });
+        });
+
+        // Window resize handling
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         });
     </script>
-
 </body>
 </html>
