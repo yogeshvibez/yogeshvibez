@@ -763,60 +763,37 @@
             }
         }
 
-        @media (max-width: 768px) {
-            .hamburger {
-                display: block;
-            }
+        /* Responsive design */
+@media (max-width: 768px) {
+    .hamburger {
+        display: block;
+    }
 
-            .nav-links {
+    .nav-links {
         position: fixed; /* Fixed position for mobile menu */
         top: 0;
-        right: -100%; /* Hidden by default on mobile */
-        max-height: 100vh; /* Allows menu to not be full height unless needed */
-        overflow-y: auto; /* Allows scrolling for many links */
-        padding-top: 5rem; /* Space from top for mobile */
-        padding-bottom: 2rem; /* Space at bottom for mobile */
-        flex-direction: column; /* Stack links vertically */
-        justify-content: flex-start; /* Links start from top */
-        align-items: center; /* Center items horizontally */
-        background: rgba(1, 22, 39, 0.98); /* Background for mobile menu */
-        width: 70%; /* Width of the mobile menu */
+        left: 0; /* Position at the top-left corner */
+        width: 100%; /* Full width */
+        height: 100vh; /* Full viewport height */
+        display: none; /* Initially hidden */
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        background: rgba(1, 22, 39, 0.98);
+        padding-top: 5rem;
+        padding-bottom: 2rem;
         text-align: center;
-        transition: var(--transition); /* Smooth transition for slide in/out */
-        backdrop-filter: blur(10px); /* Blur effect for mobile menu */
-        z-index: 1000; /* Z-index for mobile menu */
+        /* Remove the transition property related to 'right' */
+        backdrop-filter: blur(10px);
+        z-index: 1000;
         transform-style: preserve-3d;
     }
 
-            .nav-links.active {
-                right: 0;
-                transform: translateZ(0);
-            }
-
-            .stats-container {
-                flex-direction: column;
-                align-items: center;
-            }
-        }
-
-        @media (max-width: 576px) {
-            h1 {
-                font-size: 2.5rem;
-            }
-
-            .typing-container {
-                font-size: 1.4rem;
-            }
-
-            section {
-                padding: 4rem 5%;
-            }
-
-            .gifs {
-                flex-direction: column;
-                align-items: center;
-            }
-        }
+    .nav-links.active {
+        display: flex; /* Make it visible when active */
+        /* No 'right: 0;' needed here */
+    }
+}
 
         @media (max-width: 500px) {
             h1 {
@@ -1140,7 +1117,7 @@
     // Smooth scrolling for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
-            if(this.hash !== "#") {
+            if(this.hash !== "#") { // Only prevent default if it's an actual hash link
                 e.preventDefault();
                 document.querySelector(this.getAttribute('href')).scrollIntoView({
                     behavior: 'smooth'
@@ -1151,7 +1128,6 @@
     });
 
     // Close menu when any nav link is clicked (including external ones)
-    // We already have a specific function `closeNavMenu` now
     document.querySelectorAll('.nav-links a').forEach(link => {
         link.addEventListener('click', () => {
             // A small delay for external links to open before closing menu, if needed
@@ -1163,6 +1139,7 @@
             }
         });
     });
+
 
     // Close menu when clicking outside the navigation or hamburger button
     document.addEventListener('click', (event) => {
