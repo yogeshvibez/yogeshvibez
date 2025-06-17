@@ -84,20 +84,33 @@
         }
 
         .nav-links {
-            display: flex;
-            gap: 2rem;
-        }
+    display: flex; /* Always flex on desktop */
+    gap: 2rem;
+    /* Ensure these properties are for desktop view */
+    position: static; /* Default flow position */
+    height: auto; /* Height adapts to content */
+    padding: 0; /* No special padding */
+    background: transparent; /* Transparent background */
+    width: auto; /* Width adapts to content */
+    text-align: left; /* Text alignment for desktop */
+    backdrop-filter: none; /* No blur on desktop */
+    /* Ensure transition properties are appropriate for desktop */
+    transition: none; /* No transition for desktop, as it's always visible */
+}
 
-        .nav-links a {
-            color: var(--light);
-            font-size: 1.2rem;
-            text-decoration: none;
-            transition: var(--transition);
-            position: relative;
-            display: flex;
-            align-items: center;
-            transform-style: preserve-3d;
-        }
+/* Add or modify this existing rule for nav-links a */
+.nav-links a {
+    color: var(--light);
+    font-size: 1.2rem;
+    text-decoration: none;
+    transition: var(--transition);
+    position: relative;
+    display: flex; /* Keep this */
+    align-items: center; /* Keep this */
+    padding: 0.8rem 1.5rem; /* Add more padding for better spacing between links */
+    margin-bottom: 0.5rem; /* Space between each link */
+    transform-style: preserve-3d;
+}
 
         .nav-links a i {
             margin-right: 8px;
@@ -131,11 +144,18 @@
         }
 
         .hamburger {
-            display: none;
-            cursor: pointer;
-            z-index: 1001;
-            transform: translateZ(0);
-        }
+    display: none; /* Keep this for mobile display */
+    cursor: pointer;
+    z-index: 1002; /* Increased z-index to ensure it's always on top */
+    position: relative; /* Ensure z-index applies correctly relative to its position */
+    transition: transform 0.3s ease; /* Add transition for smoothness if needed */
+}
+
+/* This is a crucial addition */
+.hamburger i {
+    transition: transform 0.3s ease, opacity 0.3s ease; /* Smooth transition for icon change */
+    transform-style: preserve-3d; /* Ensure 3D transformations on the icon itself */
+}
 
         /* Enhanced scroll progress bar */
         .progress-container {
@@ -749,21 +769,24 @@
             }
 
             .nav-links {
-                position: fixed;
-                top: 0;
-                right: -100%;
-                height: 100vh;
-                flex-direction: column;
-                justify-content: center;
-                background: rgba(1, 22, 39, 0.98);
-                width: 70%;
-                text-align: center;
-                padding: 2rem 0;
-                transition: var(--transition);
-                backdrop-filter: blur(10px);
-                z-index: 1000;
-                transform-style: preserve-3d;
-            }
+        position: fixed; /* Fixed position for mobile menu */
+        top: 0;
+        right: -100%; /* Hidden by default on mobile */
+        max-height: 100vh; /* Allows menu to not be full height unless needed */
+        overflow-y: auto; /* Allows scrolling for many links */
+        padding-top: 5rem; /* Space from top for mobile */
+        padding-bottom: 2rem; /* Space at bottom for mobile */
+        flex-direction: column; /* Stack links vertically */
+        justify-content: flex-start; /* Links start from top */
+        align-items: center; /* Center items horizontally */
+        background: rgba(1, 22, 39, 0.98); /* Background for mobile menu */
+        width: 70%; /* Width of the mobile menu */
+        text-align: center;
+        transition: var(--transition); /* Smooth transition for slide in/out */
+        backdrop-filter: blur(10px); /* Blur effect for mobile menu */
+        z-index: 1000; /* Z-index for mobile menu */
+        transform-style: preserve-3d;
+    }
 
             .nav-links.active {
                 right: 0;
@@ -814,7 +837,7 @@
             }
         }
 
-        
+
     </style>
 </head>
 <body>
@@ -1020,195 +1043,235 @@
     </div>
 
     <script>
-        // Particle system for background
-        const canvas = document.getElementById('particlesCanvas');
-        const ctx = canvas.getContext('2d');
+    // Particle system for background
+    const canvas = document.getElementById('particlesCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let particles = [];
+    const particleCount = 150;
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 3 + 1;
+            this.speedX = Math.random() * 1 - 0.5;
+            this.speedY = Math.random() * 1 - 0.5;
+            this.color = `rgba(46, 196, 182, ${Math.random() * 0.5 + 0.1})`;
+            this.opacity = Math.random() * 0.5 + 0.1;
+        }
+
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+
+            if (this.x > canvas.width || this.x < 0) this.speedX = -this.speedX;
+            if (this.y > canvas.height || this.y < 0) this.speedY = -this.speedY;
+        }
+
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.globalAlpha = this.opacity;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function createParticles() {
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+    }
+
+    function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update();
+            particles[i].draw();
+
+            // Draw connections
+            for (let j = i; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < 100) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(46, 196, 182, ${0.1 * (1 - distance/100)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animateParticles);
+    }
+
+    // Mobile menu elements
+    const hamburger = document.getElementById('hamburger');
+    const navLinks = document.getElementById('navLinks');
+    const hamburgerIcon = hamburger.querySelector('i'); // Get the icon element directly
+
+    // Function to close the navigation menu and reset icon
+    function closeNavMenu() {
+        navLinks.classList.remove('active');
+        hamburgerIcon.classList.remove('fa-times');
+        hamburgerIcon.classList.add('fa-bars');
+    }
+
+    // Mobile menu toggle
+    hamburger.addEventListener('click', (event) => {
+        event.stopPropagation(); // Prevent this click from immediately triggering the document click listener
+        navLinks.classList.toggle('active');
+        // Toggle the icon based on the navLinks 'active' class
+        if (navLinks.classList.contains('active')) {
+            hamburgerIcon.classList.remove('fa-bars');
+            hamburgerIcon.classList.add('fa-times');
+        } else {
+            hamburgerIcon.classList.remove('fa-times');
+            hamburgerIcon.classList.add('fa-bars');
+        }
+    });
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            if(this.hash !== "#") {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+            closeNavMenu(); // Close menu after clicking an internal link
+        });
+    });
+
+    // Close menu when any nav link is clicked (including external ones)
+    // We already have a specific function `closeNavMenu` now
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        link.addEventListener('click', () => {
+            // A small delay for external links to open before closing menu, if needed
+            // For internal links, closeNavMenu is already called by the smooth scroll listener
+            if (!link.href.startsWith('#')) {
+                setTimeout(closeNavMenu, 100); // Small delay for external links
+            } else {
+                closeNavMenu(); // Ensure menu closes for internal links even if smooth scroll doesn't fire for some reason
+            }
+        });
+    });
+
+    // Close menu when clicking outside the navigation or hamburger button
+    document.addEventListener('click', (event) => {
+        // Check if the click occurred outside both the navLinks and the hamburger button
+        if (!navLinks.contains(event.target) && !hamburger.contains(event.target) && navLinks.classList.contains('active')) {
+            closeNavMenu();
+        }
+    });
+
+
+    // Header scroll effects
+    let lastScrollTop = 0;
+    const header = document.getElementById('mainHeader');
+
+    window.addEventListener('scroll', () => {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+        // Header shadow
+        header.style.boxShadow = scrollTop > 10 ?
+            '0 4px 30px rgba(0, 0, 0, 0.2)' :
+            '0 4px 30px rgba(0, 0, 0, 0.1)';
+
+        // Hide header on scroll down
+        if (scrollTop > lastScrollTop && scrollTop > 100) {
+            header.classList.add('hidden');
+        } else {
+            header.classList.remove('hidden');
+        }
+        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+
+        // Progress bar
+        const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (winScroll / height) * 100;
+        document.getElementById("progressBar").style.width = scrolled + "%";
+
+        // Back to top button
+        const backToTop = document.getElementById('backToTop');
+        if (scrollTop > 500) {
+            backToTop.classList.add('visible');
+        } else {
+            backToTop.classList.remove('visible');
+        }
+
+        // Section animations
+        const sections = document.querySelectorAll('section');
+        sections.forEach(section => {
+            const sectionTop = section.getBoundingClientRect().top;
+            const windowHeight = window.innerHeight;
+
+            if(sectionTop < windowHeight * 0.75) {
+                section.classList.add('visible');
+            }
+        });
+    });
+
+    // Back to top functionality
+    document.getElementById('backToTop').addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+
+    // 3D hover effect for project cards
+    const projectCards = document.querySelectorAll('.project-card');
+    projectCards.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            const rotateY = (x - centerX) / 15;
+            const rotateX = (centerY - y) / 15;
+
+            card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px) scale(1.03)`;
+        });
+
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(-10px) rotateX(5deg) rotateY(5deg) scale(1.03) translateZ(20px)';
+        });
+    });
+
+    // Initialize everything
+    window.addEventListener('load', () => {
+        // Initialize particles
+        createParticles();
+        animateParticles();
+
+        // Initialize animations
+        document.querySelector('.hero').classList.add('visible');
+
+        // Initialize section visibility
+        const sections = document.querySelectorAll('section');
+        sections.forEach((section, index) => {
+            setTimeout(() => {
+                section.classList.add('visible');
+            }, 300 * index);
+        });
+    });
+
+    // Window resize handling
+    window.addEventListener('resize', () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-
-        let particles = [];
-        const particleCount = 150;
-
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 3 + 1;
-                this.speedX = Math.random() * 1 - 0.5;
-                this.speedY = Math.random() * 1 - 0.5;
-                this.color = `rgba(46, 196, 182, ${Math.random() * 0.5 + 0.1})`;
-                this.opacity = Math.random() * 0.5 + 0.1;
-            }
-
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-
-                if (this.x > canvas.width || this.x < 0) this.speedX = -this.speedX;
-                if (this.y > canvas.height || this.y < 0) this.speedY = -this.speedY;
-            }
-
-            draw() {
-                ctx.fillStyle = this.color;
-                ctx.globalAlpha = this.opacity;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        function createParticles() {
-            for (let i = 0; i < particleCount; i++) {
-                particles.push(new Particle());
-            }
-        }
-
-        function animateParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let i = 0; i < particles.length; i++) {
-                particles[i].update();
-                particles[i].draw();
-
-                // Draw connections
-                for (let j = i; j < particles.length; j++) {
-                    const dx = particles[i].x - particles[j].x;
-                    const dy = particles[i].y - particles[j].y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-
-                    if (distance < 100) {
-                        ctx.beginPath();
-                        ctx.strokeStyle = `rgba(46, 196, 182, ${0.1 * (1 - distance/100)})`;
-                        ctx.lineWidth = 0.5;
-                        ctx.moveTo(particles[i].x, particles[i].y);
-                        ctx.lineTo(particles[j].x, particles[j].y);
-                        ctx.stroke();
-                    }
-                }
-            }
-            requestAnimationFrame(animateParticles);
-        }
-
-        // Mobile menu toggle
-        document.getElementById('hamburger').addEventListener('click', () => {
-            document.getElementById('navLinks').classList.toggle('active');
-            document.querySelector('.hamburger i').classList.toggle('fa-bars');
-            document.querySelector('.hamburger i').classList.toggle('fa-times');
-        });
-
-        // Smooth scrolling for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                if(this.hash !== "#") {
-                    e.preventDefault();
-                    document.querySelector(this.getAttribute('href')).scrollIntoView({
-                        behavior: 'smooth'
-                    });
-                }
-                document.querySelector('.nav-links').classList.remove('active');
-                document.querySelector('.hamburger i').classList.remove('fa-times');
-                document.querySelector('.hamburger i').classList.add('fa-bars');
-            });
-        });
-
-        // Header scroll effects
-        let lastScrollTop = 0;
-        const header = document.getElementById('mainHeader');
-
-        window.addEventListener('scroll', () => {
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-
-            // Header shadow
-            header.style.boxShadow = scrollTop > 10 ?
-                '0 4px 30px rgba(0, 0, 0, 0.2)' :
-                '0 4px 30px rgba(0, 0, 0, 0.1)';
-
-            // Hide header on scroll down
-            if (scrollTop > lastScrollTop && scrollTop > 100) {
-                header.classList.add('hidden');
-            } else {
-                header.classList.remove('hidden');
-            }
-            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
-
-            // Progress bar
-            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const scrolled = (winScroll / height) * 100;
-            document.getElementById("progressBar").style.width = scrolled + "%";
-
-            // Back to top button
-            const backToTop = document.getElementById('backToTop');
-            if (scrollTop > 500) {
-                backToTop.classList.add('visible');
-            } else {
-                backToTop.classList.remove('visible');
-            }
-
-            // Section animations
-            const sections = document.querySelectorAll('section');
-            sections.forEach(section => {
-                const sectionTop = section.getBoundingClientRect().top;
-                const windowHeight = window.innerHeight;
-
-                if(sectionTop < windowHeight * 0.75) {
-                    section.classList.add('visible');
-                }
-            });
-        });
-
-        // Back to top functionality
-        document.getElementById('backToTop').addEventListener('click', () => {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        });
-
-        // 3D hover effect for project cards
-        const projectCards = document.querySelectorAll('.project-card');
-        projectCards.forEach(card => {
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-
-                const rotateY = (x - centerX) / 15;
-                const rotateX = (centerY - y) / 15;
-
-                card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px) scale(1.03)`;
-            });
-
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'translateY(-10px) rotateX(5deg) rotateY(5deg) scale(1.03) translateZ(20px)';
-            });
-        });
-
-        // Initialize everything
-        window.addEventListener('load', () => {
-            // Initialize particles
-            createParticles();
-            animateParticles();
-
-            // Initialize animations
-            document.querySelector('.hero').classList.add('visible');
-
-            // Initialize section visibility
-            const sections = document.querySelectorAll('section');
-            sections.forEach((section, index) => {
-                setTimeout(() => {
-                    section.classList.add('visible');
-                }, 300 * index);
-            });
-        });
-
-        // Window resize handling
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-    </script>
+    });
+</script>
 </body>
 </html>
