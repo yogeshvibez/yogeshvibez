@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#02060b">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="A custom, original-quality video player.">
+  <title>HEYOGESH</title>
+
+  <style>
+    /* One-file, dependency-free custom player. All user-visible controls live here. */
+    :root {
+      --page: #02060b;
+      --panel: rgba(4, 11, 19, 0.68);
+      --panel-strong: rgba(5, 13, 22, 0.84);
+      --line: rgba(225, 245, 255, 0.19);
+      --text: #f4f8fb;
+      --muted: rgba(231, 241, 248, 0.66);
+      --accent: #79ddff;
+      --accent-strong: #34bfff;
+      --safe-top: max(12px, env(safe-area-inset-top));
+      --safe-right: max(12px, env(safe-area-inset-right));
+      --safe-bottom: max(14px, env(safe-area-inset-bottom));
+      --safe-left: max(12px, env(safe-area-inset-left));
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      overscroll-behavior: none;
+      background: var(--page);
+    }
+
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    button,
+    input { font: inherit; }
+
+    .player {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      width: 100vw;
+      height: 100vh;
+      height: 100svh;
+      height: 100dvh;
+      overflow: hidden;
+      isolation: isolate;
+      background:
+        radial-gradient(ellipse at 50% 110%, rgba(18, 79, 111, 0.24), transparent 52%),
+        var(--page);
+      touch-action: manipulation;
+    }
+
+    /* Original MP4 only: no transcoding or adaptive-quality selector is present. */
+    video {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+      /* Browsers cannot set physical screen brightness. This is a fixed, subtle
+         pixel-level lift; it has no user-facing brightness setting. */
+      filter: brightness(1.06) contrast(1.012) saturate(1.01);
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    /* Used only when Google rejects a direct cross-site media request. */
+    .drive-fallback {
+      position: absolute;
+      z-index: 10;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+    }
+
+    .drive-fallback[hidden] { display: none; }
+    /* Drive is a replacement player, never a layer over the custom player. */
+    .player.using-drive video,
+    .player.using-drive .controls,
+    .player.using-drive .scrim,
+    .player.using-drive .center-status,
+    .player.using-drive .start-overlay,
+    .player.using-drive .error-card { display: none; }
+
+    .start-overlay {
+      position: absolute;
+      z-index: 6;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+      background: radial-gradient(ellipse at center, rgba(18, 54, 76, 0.28), rgba(2, 6, 11, 0.72) 68%);
+      transition: opacity 180ms ease, visibility 180ms ease;
+    }
+
+    .player:not(.is-awaiting-start) .start-overlay {
+      visibility: hidden;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .start-button {
+      min-height: 52px;
+      padding: 0 20px;
+      color: #031018;
+      font-weight: 760;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      border: 0;
+      border-radius: 999px;
+      background: #c8f2ff;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.42), inset 0 1px rgba(255, 255, 255, 0.72);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .start-button:active { transform: scale(0.97); }
+    .start-button:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+
+    .scrim {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0;
+      background: linear-gradient(to bottom, rgba(1, 5, 10, 0.36), transparent 25%, transparent 62%, rgba(1, 5, 10, 0.65));
+      transition: opacity 260ms ease;
+      will-change: opacity;
+    }
+
+    .player.controls-visible .scrim { opacity: 1; }
+
+    .center-status {
+      position: absolute;
+      z-index: 3;
+      top: 50%;
+      left: 50%;
+      display: grid;
+      place-items: center;
+      min-width: 56px;
+      min-height: 56px;
+      padding: 13px;
+      color: var(--text);
+      pointer-events: none;
+      border: 1px solid rgba(236, 250, 255, 0.28);
+      border-radius: 50%;
+      background: rgba(8, 17, 28, 0.62);
+      box-shadow: 0 15px 42px rgba(0, 0, 0, 0.31), inset 0 1px rgba(255, 255, 255, 0.18);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      opacity: 0;
+      transform: translate3d(-50%, -50%, 0) scale(0.88);
+      transition: opacity 180ms ease, transform 180ms ease;
+      will-change: opacity, transform;
+    }
+
+    .center-status.show {
+      opacity: 1;
+      transform: translate3d(-50%, -50%, 0) scale(1);
+    }
+
+    .center-status.loading {
+      width: 42px;
+      min-width: 42px;
+      height: 42px;
+      min-height: 42px;
+      padding: 0;
+      border-color: rgba(232, 250, 255, 0.18);
+      border-top-color: var(--text);
+      animation: spin 850ms linear infinite;
+    }
+
+    .center-status.loading span { display: none; }
+
+    .controls {
+      position: absolute;
+      z-index: 4;
+      right: var(--safe-right);
+      bottom: var(--safe-bottom);
+      left: var(--safe-left);
+      display: grid;
+      gap: 10px;
+      padding: 10px 11px 11px;
+      pointer-events: none;
+      border: 1px solid transparent;
+      border-radius: 17px;
+      background:
+        linear-gradient(var(--panel), var(--panel)) padding-box,
+        linear-gradient(120deg, rgba(255,255,255,0.18), rgba(129,222,255,0.1) 38%, rgba(255,255,255,0.03)) border-box;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.32), inset 0 1px rgba(255, 255, 255, 0.12);
+      -webkit-backdrop-filter: blur(18px) saturate(122%);
+      backdrop-filter: blur(18px) saturate(122%);
+      opacity: 0;
+      transform: translate3d(0, 10px, 0);
+      transition: opacity 230ms ease, transform 230ms ease;
+      will-change: opacity, transform;
+    }
+
+    .player.controls-visible .controls {
+      pointer-events: auto;
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+
+    .timeline-wrap { display: grid; align-items: center; height: 15px; }
+
+    input[type="range"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      margin: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      outline: none;
+      background: linear-gradient(to right, var(--accent) 0 var(--progress), rgba(255, 255, 255, 0.24) var(--progress) 100%);
+      touch-action: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 13px;
+      height: 13px;
+      border: 0;
+      border-radius: 50%;
+      background: #f4fcff;
+      box-shadow: 0 0 0 3px rgba(92, 213, 255, 0.2), 0 1px 5px rgba(0, 0, 0, 0.42);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border: 0;
+      border-radius: 50%;
+      background: #f4fcff;
+      box-shadow: 0 0 0 3px rgba(92, 213, 255, 0.2), 0 1px 5px rgba(0, 0, 0, 0.42);
+    }
+
+    input[type="range"]:focus-visible { outline: 2px solid #c7f4ff; outline-offset: 5px; }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      gap: 5px;
+    }
+
+    .control-button {
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      width: 38px;
+      height: 34px;
+      padding: 0;
+      color: var(--text);
+      cursor: pointer;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      transition: background 160ms ease, transform 160ms ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .control-button:active { transform: scale(0.92); background: rgba(220, 246, 255, 0.15); }
+    .control-button:focus-visible { outline: 2px solid #b9efff; outline-offset: 2px; }
+    .control-button svg { width: 20px; height: 20px; fill: currentColor; }
+
+    .time-readout {
+      min-width: 86px;
+      margin-left: 2px;
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+    }
+
+    .volume-slider {
+      width: 0;
+      margin-right: 1px;
+      overflow: hidden;
+      opacity: 0;
+      transition: width 180ms ease, opacity 180ms ease;
+    }
+
+    .volume-slider input { min-width: 72px; }
+    .control-row:focus-within .volume-slider { width: 78px; opacity: 1; }
+
+    @media (hover: hover) {
+      .control-row:hover .volume-slider { width: 78px; opacity: 1; }
+    }
+
+    /* Touch devices have no hover state, so keep the real volume control exposed. */
+    @media (hover: none) {
+      .volume-slider { width: 64px; opacity: 1; }
+      .volume-slider input { min-width: 64px; }
+    }
+
+    .spacer { flex: 1 1 auto; }
+
+    .source-lock {
+      display: inline-flex;
+      align-items: center;
+      height: 23px;
+      padding: 0 8px;
+      color: rgba(220, 244, 255, 0.86);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      border: 1px solid rgba(194, 236, 255, 0.22);
+      border-radius: 999px;
+      background: rgba(106, 211, 255, 0.09);
+      white-space: nowrap;
+    }
+
+    .error-card {
+      position: absolute;
+      z-index: 5;
+      top: 50%;
+      left: 50%;
+      width: min(330px, calc(100% - 40px));
+      padding: 19px;
+      color: var(--text);
+      text-align: center;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel-strong);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate3d(-50%, -47%, 0);
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .error-card.is-visible { opacity: 1; pointer-events: auto; transform: translate3d(-50%, -50%, 0); }
+    .error-card p { margin: 0 0 13px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .error-card a { color: #05202b; font-size: 13px; font-weight: 750; text-decoration: none; padding: 9px 13px; border-radius: 999px; background: #bbedff; }
+
+    @keyframes spin { to { transform: translate3d(-50%, -50%, 0) rotate(360deg); } }
+
+    @media (max-width: 540px) {
+      .controls { gap: 8px; padding: 8px 9px 9px; border-radius: 14px; }
+      .control-button { width: 35px; height: 32px; }
+      .time-readout { min-width: 79px; font-size: 10px; }
+      .source-lock { display: none; }
+    }
+
+    @media (max-height: 440px) and (orientation: landscape) {
+      :root { --safe-bottom: max(8px, env(safe-area-inset-bottom)); }
+      .controls { right: max(12px, env(safe-area-inset-right)); left: max(12px, env(safe-area-inset-left)); padding-block: 7px; }
+      .timeline-wrap { height: 10px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="player is-awaiting-start" id="player" aria-label="Custom video player">
+    <!-- Public Drive download endpoint: CORS-enabled and range-capable at time of implementation. -->
+    <video
+      id="video"
+      playsinline
+      preload="metadata"
+      disablepictureinpicture
+      aria-label="Video"
+      src="https://drive.usercontent.google.com/download?id=1oqooJeE7iPuCN1j_lb-JyzNwcEjhkogA&amp;export=download&amp;confirm=t"
+    ></video>
+
+    <!-- Google can refuse direct media embedding at any time. This fallback keeps
+         playback available through its official, supported preview player. -->
+    <iframe
+      class="drive-fallback"
+      id="drive-fallback"
+      title="Google Drive video player"
+      data-src="https://drive.google.com/file/d/1oqooJeE7iPuCN1j_lb-JyzNwcEjhkogA/preview?autoplay=1"
+      allow="autoplay; fullscreen; picture-in-picture"
+      allowfullscreen
+      hidden
+    ></iframe>
+
+    <div class="scrim" aria-hidden="true"></div>
+    <div class="center-status loading" id="center-status" aria-live="polite"><span>▶</span></div>
+
+    <div class="start-overlay" id="start-overlay">
+      <button class="start-button" id="start" type="button">Tap to play fullscreen</button>
+    </div>
+
+    <section class="controls" aria-label="Video controls">
+      <div class="timeline-wrap">
+        <input id="seek" type="range" min="0" max="0" value="0" step="0.01" aria-label="Seek through video">
+      </div>
+      <div class="control-row">
+        <button class="control-button" id="play" type="button" aria-label="Play" title="Play (Space or K)">
+          <svg id="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.3v13.4a1 1 0 0 0 1.52.86l10.1-6.7a1.03 1.03 0 0 0 0-1.72L9.52 4.44A1 1 0 0 0 8 5.3Z"/></svg>
+        </button>
+        <button class="control-button" id="mute" type="button" aria-label="Mute" title="Mute (M)">
+          <svg id="volume-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h4l5 4V5.5l-5 4H4Zm11.5 2.5a3.5 3.5 0 0 0-1.4-2.8v5.6a3.5 3.5 0 0 0 1.4-2.8Zm0-8.1v2.17a6.5 6.5 0 0 1 0 11.86v2.17a8.5 8.5 0 0 0 0-16.2Z"/></svg>
+        </button>
+        <div class="volume-slider"><input id="volume" type="range" min="0" max="1" value="1" step="0.01" aria-label="Volume"></div>
+        <output class="time-readout" id="time" aria-live="off">0:00 / --:--</output>
+        <span class="spacer"></span>
+        <span class="source-lock" title="Original source; no quality switching">ORIGINAL</span>
+        <button class="control-button" id="fullscreen" type="button" aria-label="Enter fullscreen" title="Fullscreen (F)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v2H6v4H4V4Zm10 0h6v6h-2V6h-4V4ZM4 14h2v4h4v2H4v-6Zm14 0h2v6h-6v-2h4v-4Z"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <aside class="error-card" id="error-card" aria-live="assertive">
+      <p>The video source could not be loaded here.</p>
+      <a href="https://drive.google.com/file/d/1oqooJeE7iPuCN1j_lb-JyzNwcEjhkogA/view?usp=sharing" target="_blank" rel="noopener noreferrer">Open in Google Drive</a>
+    </aside>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const player = document.getElementById("player");
+      const video = document.getElementById("video");
+      const startOverlay = document.getElementById("start-overlay");
+      const startButton = document.getElementById("start");
+      const seek = document.getElementById("seek");
+      const playButton = document.getElementById("play");
+      const playIcon = document.getElementById("play-icon");
+      const muteButton = document.getElementById("mute");
+      const volumeIcon = document.getElementById("volume-icon");
+      const volume = document.getElementById("volume");
+      const time = document.getElementById("time");
+      const fullscreen = document.getElementById("fullscreen");
+      const status = document.getElementById("center-status");
+      const errorCard = document.getElementById("error-card");
+      const driveFallback = document.getElementById("drive-fallback");
+      let controlsTimer = 0;
+      let statusTimer = 0;
+      let seeking = false;
+      let touchStart = null;
+      let lastTap = 0;
+
+      const icons = {
+        play: '<path d="M8 5.3v13.4a1 1 0 0 0 1.52.86l10.1-6.7a1.03 1.03 0 0 0 0-1.72L9.52 4.44A1 1 0 0 0 8 5.3Z"/>',
+        pause: '<path d="M7 5h3.5v14H7V5Zm6.5 0H17v14h-3.5V5Z"/>',
+        volume: '<path d="M4 9.5v5h4l5 4V5.5l-5 4H4Zm11.5 2.5a3.5 3.5 0 0 0-1.4-2.8v5.6a3.5 3.5 0 0 0 1.4-2.8Zm0-8.1v2.17a6.5 6.5 0 0 1 0 11.86v2.17a8.5 8.5 0 0 0 0-16.2Z"/>',
+        muted: '<path d="M4 9.5v5h4l5 4V5.5l-5 4H4Zm10.2 1.1 2.1 2.1 2.1-2.1 1.4 1.4-2.1 2.1 2.1 2.1-1.4 1.4-2.1-2.1-2.1 2.1-1.4-1.4 2.1-2.1-2.1-2.1 1.4-1.4Z"/>'
+      };
+
+      const isFiniteDuration = () => Number.isFinite(video.duration) && video.duration > 0;
+      const formatTime = (seconds) => {
+        if (!Number.isFinite(seconds) || seconds < 0) return "--:--";
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60).toString().padStart(2, "0");
+        return hours ? `${hours}:${String(minutes).padStart(2, "0")}:${secs}` : `${minutes}:${secs}`;
+      };
+
+      const updateTimeline = () => {
+        const duration = isFiniteDuration() ? video.duration : 0;
+        const current = Number.isFinite(video.currentTime) ? video.currentTime : 0;
+        const percent = duration ? Math.min(100, (current / duration) * 100) : 0;
+        if (!seeking) seek.value = current;
+        seek.style.setProperty("--progress", `${percent}%`);
+        time.value = `${formatTime(current)} / ${formatTime(duration)}`;
+      };
+
+      const updatePlayUI = () => {
+        const paused = video.paused;
+        playIcon.innerHTML = paused ? icons.play : icons.pause;
+        playButton.setAttribute("aria-label", paused ? "Play" : "Pause");
+        playButton.title = `${paused ? "Play" : "Pause"} (Space or K)`;
+      };
+
+      const updateVolumeUI = () => {
+        const muted = video.muted || video.volume === 0;
+        volumeIcon.innerHTML = muted ? icons.muted : icons.volume;
+        muteButton.setAttribute("aria-label", muted ? "Unmute" : "Mute");
+        volume.value = video.muted ? 0 : video.volume;
+        volume.style.setProperty("--progress", `${(video.muted ? 0 : video.volume) * 100}%`);
+      };
+
+      const showStatus = (symbol, duration = 480) => {
+        window.clearTimeout(statusTimer);
+        status.classList.remove("loading");
+        status.firstElementChild.textContent = symbol;
+        status.classList.add("show");
+        statusTimer = window.setTimeout(() => status.classList.remove("show"), duration);
+      };
+
+      const setBuffering = (buffering) => {
+        window.clearTimeout(statusTimer);
+        if (player.classList.contains("is-awaiting-start")) {
+          status.classList.remove("loading", "show");
+          return;
+        }
+        if (buffering) {
+          status.classList.add("loading", "show");
+        } else {
+          status.classList.remove("loading", "show");
+        }
+      };
+
+      const revealControls = () => {
+        player.classList.add("controls-visible");
+        window.clearTimeout(controlsTimer);
+        if (!video.paused) {
+          controlsTimer = window.setTimeout(() => player.classList.remove("controls-visible"), 2400);
+        }
+      };
+
+      const seekBy = (seconds) => {
+        if (!isFiniteDuration()) return;
+        video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + seconds));
+        showStatus(seconds > 0 ? "»" : "«");
+        revealControls();
+      };
+
+      const requestImmersiveFullscreen = async () => {
+        if (document.fullscreenElement || document.webkitFullscreenElement || video.webkitDisplayingFullscreen) return;
+        try {
+          // iPhone Safari exposes fullscreen on the video element rather than the page.
+          if (typeof video.webkitEnterFullscreen === "function") {
+            video.webkitEnterFullscreen();
+            return;
+          }
+          await (player.requestFullscreen?.() || player.webkitRequestFullscreen?.());
+        } catch (_) {
+          // The player already occupies the complete visual viewport.
+        }
+      };
+
+      const startImmersivePlayback = async () => {
+        if (player.classList.contains("using-drive")) return;
+        player.classList.remove("is-awaiting-start");
+        startOverlay.setAttribute("aria-hidden", "true");
+        // Both calls are intentionally made from this user gesture. Browsers reject
+        // fullscreen requests made later, after an awaited promise.
+        void requestImmersiveFullscreen();
+        try {
+          await video.play();
+        } catch (_) {
+          player.classList.add("is-awaiting-start");
+          startOverlay.removeAttribute("aria-hidden");
+          revealControls();
+        }
+      };
+
+      const togglePlayback = async () => {
+        if (player.classList.contains("is-awaiting-start")) {
+          await startImmersivePlayback();
+          return;
+        }
+        if (video.paused) {
+          try { await video.play(); } catch (_) { revealControls(); }
+        } else {
+          video.pause();
+        }
+      };
+
+      const toggleFullscreen = async () => {
+        try {
+          if (video.webkitDisplayingFullscreen && typeof video.webkitExitFullscreen === "function") {
+            video.webkitExitFullscreen();
+          } else if (document.fullscreenElement || document.webkitFullscreenElement) {
+            await (document.exitFullscreen?.() || document.webkitExitFullscreen?.());
+          } else {
+            await requestImmersiveFullscreen();
+          }
+        } catch (_) { /* Fullscreen can be denied by browser policy. */ }
+      };
+
+      const useDriveFallback = () => {
+        // The direct-download route is not a contractual web-video API. If Drive
+        // refuses it, switch to its documented iframe player instead of failing.
+        if (player.classList.contains("using-drive")) return;
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+        window.clearTimeout(controlsTimer);
+        setBuffering(false);
+        errorCard.classList.remove("is-visible");
+        player.classList.remove("is-awaiting-start", "controls-visible");
+        startOverlay.setAttribute("aria-hidden", "true");
+        driveFallback.hidden = false;
+        driveFallback.src = driveFallback.dataset.src;
+        player.classList.add("using-drive");
+      };
+
+      video.addEventListener("loadedmetadata", () => {
+        seek.max = video.duration;
+        updateTimeline();
+      });
+      video.addEventListener("durationchange", updateTimeline);
+      video.addEventListener("timeupdate", updateTimeline);
+      video.addEventListener("progress", updateTimeline);
+      video.addEventListener("play", () => { updatePlayUI(); setBuffering(false); revealControls(); });
+      video.addEventListener("pause", () => { updatePlayUI(); player.classList.add("controls-visible"); });
+      video.addEventListener("playing", () => setBuffering(false));
+      video.addEventListener("waiting", () => setBuffering(true));
+      video.addEventListener("canplay", () => setBuffering(false));
+      video.addEventListener("ended", () => { updatePlayUI(); player.classList.add("controls-visible"); });
+      video.addEventListener("volumechange", updateVolumeUI);
+      video.addEventListener("error", useDriveFallback);
+
+      startButton.addEventListener("click", (event) => { event.stopPropagation(); startImmersivePlayback(); });
+      playButton.addEventListener("click", (event) => { event.stopPropagation(); togglePlayback(); });
+      muteButton.addEventListener("click", (event) => { event.stopPropagation(); video.muted = !video.muted; if (!video.muted && video.volume === 0) video.volume = 1; });
+      fullscreen.addEventListener("click", (event) => { event.stopPropagation(); toggleFullscreen(); });
+
+      volume.addEventListener("input", (event) => {
+        event.stopPropagation();
+        video.volume = Number(volume.value);
+        video.muted = video.volume === 0;
+      });
+
+      seek.addEventListener("pointerdown", (event) => { event.stopPropagation(); seeking = true; });
+      seek.addEventListener("input", (event) => {
+        event.stopPropagation();
+        const value = Number(seek.value);
+        const duration = isFiniteDuration() ? video.duration : 0;
+        seek.style.setProperty("--progress", `${duration ? (value / duration) * 100 : 0}%`);
+        time.value = `${formatTime(value)} / ${formatTime(duration)}`;
+      });
+      seek.addEventListener("change", (event) => {
+        event.stopPropagation();
+        video.currentTime = Number(seek.value);
+        seeking = false;
+        revealControls();
+      });
+
+      player.addEventListener("pointerdown", (event) => {
+        if (event.target.closest("button, input, a")) return;
+        touchStart = { x: event.clientX, y: event.clientY, time: performance.now(), type: event.pointerType };
+      }, { passive: true });
+
+      player.addEventListener("pointerup", (event) => {
+        if (!touchStart || event.target.closest("button, input, a")) return;
+        const dx = event.clientX - touchStart.x;
+        const dy = event.clientY - touchStart.y;
+        const elapsed = performance.now() - touchStart.time;
+        const now = performance.now();
+        if (touchStart.type === "touch" && Math.abs(dx) > 58 && Math.abs(dx) > Math.abs(dy)) {
+          seekBy(dx > 0 ? 15 : -15);
+        } else if (elapsed < 280 && Math.abs(dx) < 14 && Math.abs(dy) < 14) {
+          if (now - lastTap < 310) {
+            seekBy(event.clientX > window.innerWidth / 2 ? 10 : -10);
+            lastTap = 0;
+          } else {
+            lastTap = now;
+            window.setTimeout(() => { if (lastTap === now) { revealControls(); lastTap = 0; } }, 315);
+          }
+        }
+        touchStart = null;
+      }, { passive: true });
+
+      window.addEventListener("keydown", (event) => {
+        if (event.target.matches("input")) return;
+        const key = event.key.toLowerCase();
+        if ([" ", "k", "arrowleft", "arrowright", "m", "f", "home", "end"].includes(key)) event.preventDefault();
+        if (key === " " || key === "k") togglePlayback();
+        if (key === "arrowleft") seekBy(-5);
+        if (key === "arrowright") seekBy(5);
+        if (key === "m") video.muted = !video.muted;
+        if (key === "f") toggleFullscreen();
+        if (key === "home") video.currentTime = 0;
+        if (key === "end" && isFiniteDuration()) video.currentTime = video.duration;
+        revealControls();
+      });
+
+      document.addEventListener("fullscreenchange", revealControls);
+      document.addEventListener("webkitfullscreenchange", revealControls);
+      video.addEventListener("webkitbeginfullscreen", () => player.classList.remove("is-awaiting-start"));
+      video.addEventListener("webkitendfullscreen", revealControls);
+      updatePlayUI();
+      updateVolumeUI();
+      updateTimeline();
+    })();
+  </script>
+</body>
+</html>
