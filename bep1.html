@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#03060b">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="HEYOGESH — a private screening.">
+  <title>HEYOGESH</title>
+
+  <style>
+    /*
+      HEYOGESH is intentionally a one-screen experience.  The Drive iframe owns
+      media playback; this document owns the viewing environment and identity.
+    */
+    :root {
+      --ink: #03060b;
+      --mist: rgba(244, 250, 255, 0.92);
+      --silver: #c9d5e1;
+      --ice: #b9eaff;
+      --cyan: #59d9ff;
+      --deep-cyan: #0884cf;
+      --glass: rgba(10, 19, 31, 0.48);
+      --edge: rgba(207, 239, 255, 0.34);
+      --safe-top: max(16px, env(safe-area-inset-top));
+      --safe-right: max(16px, env(safe-area-inset-right));
+      --safe-left: max(16px, env(safe-area-inset-left));
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      overflow: hidden;
+      overscroll-behavior: none;
+      background: var(--ink);
+    }
+
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* Fixed positioning avoids mobile address-bar reflow; dvh keeps modern browsers exact. */
+    .player-shell {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      isolation: isolate;
+      overflow: clip;
+      background:
+        radial-gradient(ellipse at 50% 120%, #0a1b2d 0%, transparent 46%),
+        var(--ink);
+    }
+
+    .drive-player {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+      /* These hints avoid a layer promotion/paint surprise while the video runs. */
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    /*
+      The veil is outside the iframe and has no media semantics. It is only a
+      calm startup state while Drive initializes its own player.
+    */
+    .startup-veil {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(21, 62, 88, 0.2), transparent 28%),
+        var(--ink);
+      opacity: 1;
+      transition: opacity 420ms ease;
+      will-change: opacity;
+    }
+
+    .startup-veil[hidden] { display: none; }
+    .startup-veil.is-cleared { opacity: 0; }
+
+    .loader {
+      width: 30px;
+      height: 30px;
+      border: 1.5px solid rgba(204, 235, 255, 0.18);
+      border-top-color: rgba(213, 247, 255, 0.92);
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(82, 204, 255, 0.25);
+      animation: spin 900ms linear infinite;
+    }
+
+    .open-drive {
+      position: absolute;
+      z-index: 3;
+      top: var(--safe-top);
+      right: var(--safe-right);
+      padding: 9px 12px;
+      color: rgba(233, 247, 255, 0.87);
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: 0.03em;
+      text-decoration: none;
+      border: 1px solid rgba(213, 242, 255, 0.24);
+      border-radius: 999px;
+      background: rgba(6, 14, 23, 0.44);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.19), inset 0 1px rgba(255,255,255,0.15);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate3d(0, -5px, 0);
+      transition: opacity 240ms ease, transform 240ms ease;
+    }
+
+    /* The recovery link is deliberately delayed: it is only for a failed Drive load. */
+    .player-shell.show-recovery .open-drive {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate3d(0, 0, 0);
+    }
+
+    .open-drive:focus-visible {
+      outline: 2px solid #a9edff;
+      outline-offset: 3px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (min-width: 900px) {
+      :root {
+        --safe-left: max(28px, env(safe-area-inset-left));
+      }
+    }
+
+    @media (max-height: 430px) and (orientation: landscape) {
+      :root {
+        --safe-left: max(12px, env(safe-area-inset-left));
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="player-shell ui-active" id="player-shell" aria-label="HEYOGESH video player">
+    <!--
+      Google Drive is an isolated origin. Its preview player is the only reliable
+      static player for this source, so its native controls remain available in
+      the frame. autoplay=1 is a request, not a browser-autoplay guarantee.
+    -->
+    <iframe
+      class="drive-player"
+      id="drive-player"
+      title="HEYOGESH video"
+      src="https://drive.google.com/file/d/1oqooJeE7iPuCN1j_lb-JyzNwcEjhkogA/preview?autoplay=1"
+      allow="autoplay; fullscreen; picture-in-picture"
+      allowfullscreen
+      referrerpolicy="strict-origin-when-cross-origin"
+    ></iframe>
+
+    <div class="startup-veil" id="startup-veil" aria-live="polite" aria-label="Loading video">
+      <div class="loader" aria-hidden="true"></div>
+    </div>
+
+    <a class="open-drive" href="https://drive.google.com/file/d/1oqooJeE7iPuCN1j_lb-JyzNwcEjhkogA/view?usp=sharing" target="_blank" rel="noopener noreferrer">
+      Open in Drive
+    </a>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const shell = document.getElementById("player-shell");
+      const frame = document.getElementById("drive-player");
+      const veil = document.getElementById("startup-veil");
+      let didLoad = false;
+
+      // Fade the startup layer after the iframe document has initialized.
+      const clearVeil = () => {
+        if (didLoad) return;
+        didLoad = true;
+        veil.classList.add("is-cleared");
+        window.setTimeout(() => { veil.hidden = true; }, 440);
+      };
+
+      frame.addEventListener("load", clearVeil, { once: true });
+
+      // A network failure can leave an iframe visually blank without firing an
+      // error event. Keep its loader out of the way, then offer a direct escape.
+      window.setTimeout(() => {
+        if (!didLoad) {
+          clearVeil();
+          shell.classList.add("show-recovery");
+        }
+      }, 12000);
+
+    })();
+  </script>
+</body>
+</html>
