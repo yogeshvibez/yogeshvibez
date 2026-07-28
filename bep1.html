@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#05070a" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="A focused, cinematic Google Drive video viewer."
+    />
+    <title>HEYOGESH | Cinema</title>
+
+    <style>
+      /*
+       * Single-screen cinema shell
+       * Layer order: player (0), atmospheric frame (1), watermark (2), controls (3), loader (4).
+       */
+      :root {
+        --app-height: 100dvh;
+        --ink: #05070a;
+        --surface: #0a0e13;
+        --line: rgb(219 241 248 / 0.2);
+        --muted: #a6b3b9;
+        --ice: #e9fbff;
+        --cyan: #79d8eb;
+        --cyan-deep: #1c7185;
+        --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        min-width: 0;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--ink);
+      }
+
+      body {
+        color: var(--ice);
+        font-family: "Avenir Next", Avenir, "Helvetica Neue", Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        overscroll-behavior: none;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .cinema {
+        position: relative;
+        width: 100%;
+        height: var(--app-height);
+        min-height: 100svh;
+        overflow: hidden;
+        isolation: isolate;
+        background:
+          radial-gradient(circle at 82% 5%, rgb(53 135 153 / 0.13), transparent 26rem),
+          radial-gradient(circle at 12% 100%, rgb(5 51 65 / 0.16), transparent 28rem),
+          var(--ink);
+      }
+
+      /* Gives the player an edge only when there is room for it. */
+      .player-shell {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        background: #000;
+      }
+
+      .player-shell::after {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        content: "";
+        box-shadow: inset 0 0 0 1px rgb(205 237 245 / 0.07), inset 0 0 7vw rgb(0 0 0 / 0.25);
+      }
+
+      .player-shell:fullscreen,
+      .player-shell:-webkit-full-screen {
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        border-radius: 0;
+      }
+
+      .drive-player {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        opacity: 0;
+        background: #000;
+        transform: translateZ(0);
+        transition: opacity 700ms var(--ease-out), transform 900ms var(--ease-out);
+      }
+
+      .cinema.is-ready .drive-player {
+        opacity: 1;
+      }
+
+      .cinema.is-ready .player-shell {
+        animation: settle 950ms var(--ease-out) both;
+      }
+
+      .ambient-frame {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        background:
+          linear-gradient(90deg, rgb(0 0 0 / 0.2), transparent 12%, transparent 88%, rgb(0 0 0 / 0.2)),
+          linear-gradient(0deg, rgb(0 0 0 / 0.26), transparent 18%, transparent 82%, rgb(0 0 0 / 0.18));
+      }
+
+      .watermark {
+        position: absolute;
+        z-index: 2;
+        bottom: max(1.15rem, env(safe-area-inset-bottom));
+        left: max(1.15rem, env(safe-area-inset-left));
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.15rem;
+        padding: 0.18rem 0.78rem 0.18rem 0.24rem;
+        overflow: hidden;
+        border: 1px solid rgb(203 243 252 / 0.32);
+        border-radius: 999px;
+        color: var(--ice);
+        background:
+          linear-gradient(135deg, rgb(239 253 255 / 0.28), rgb(60 133 149 / 0.18) 47%, rgb(1 8 11 / 0.72)),
+          rgb(5 15 19 / 0.62);
+        box-shadow:
+          inset 0 1px 0 rgb(255 255 255 / 0.34),
+          inset 0 -1px 0 rgb(83 202 225 / 0.17),
+          0 5px 24px rgb(24 174 203 / 0.18),
+          0 12px 35px rgb(0 0 0 / 0.28);
+        pointer-events: none;
+        -webkit-backdrop-filter: blur(14px) saturate(135%);
+        backdrop-filter: blur(14px) saturate(135%);
+        transform: translate3d(0, 0, 0);
+      }
+
+      .watermark::before {
+        width: 1.5rem;
+        height: 1.5rem;
+        margin-right: 0.46rem;
+        border: 1px solid rgb(219 250 255 / 0.4);
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at 34% 28%, #effdff 0 8%, transparent 9%),
+          linear-gradient(135deg, #8de8f5, #1c8299 55%, #0a2530);
+        box-shadow: inset 0 1px 2px rgb(255 255 255 / 0.5), 0 0 13px rgb(101 222 243 / 0.35);
+        content: "";
+      }
+
+      .watermark::after {
+        position: absolute;
+        inset: 1px;
+        border: 1px solid rgb(229 251 255 / 0.1);
+        border-radius: inherit;
+        content: "";
+      }
+
+      .watermark__type {
+        position: relative;
+        z-index: 1;
+        font-size: clamp(0.64rem, 1.7vw, 0.76rem);
+        font-weight: 800;
+        letter-spacing: 0.15em;
+        line-height: 1;
+        text-shadow: 0 1px 0 rgb(255 255 255 / 0.55), 0 0 13px rgb(120 226 245 / 0.55);
+      }
+
+      .control-dock {
+        position: absolute;
+        z-index: 3;
+        right: max(1rem, env(safe-area-inset-right));
+        bottom: max(1rem, env(safe-area-inset-bottom));
+        display: flex;
+        align-items: center;
+        gap: 0.56rem;
+        opacity: 0;
+        transform: translate3d(0, 0.45rem, 0);
+        transition: opacity 360ms var(--ease-out), transform 360ms var(--ease-out);
+      }
+
+      .cinema.is-ready .control-dock,
+      .control-dock:focus-within,
+      .cinema:hover .control-dock {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+      }
+
+      .cinema.is-fullscreen .control-dock {
+        opacity: 0;
+      }
+
+      .cinema.is-fullscreen:hover .control-dock,
+      .cinema.is-fullscreen .control-dock:focus-within {
+        opacity: 1;
+      }
+
+      .cinema-control {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.44rem;
+        min-height: 2.25rem;
+        padding: 0.46rem 0.72rem;
+        border: 1px solid rgb(222 246 251 / 0.24);
+        border-radius: 999px;
+        color: #ecfcff;
+        background: rgb(6 15 19 / 0.72);
+        box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 9px 28px rgb(0 0 0 / 0.2);
+        cursor: pointer;
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+      }
+
+      .cinema-control:hover {
+        border-color: rgb(148 227 242 / 0.52);
+        background: rgb(10 36 44 / 0.86);
+      }
+
+      .cinema-control:focus-visible {
+        outline: 2px solid var(--cyan);
+        outline-offset: 3px;
+      }
+
+      .cinema-control:active {
+        transform: scale(0.97);
+      }
+
+      .cinema-control[hidden] {
+        display: none;
+      }
+
+      .control-icon {
+        width: 0.9rem;
+        height: 0.9rem;
+        border: 1.5px solid currentColor;
+        border-radius: 1px;
+        box-shadow: inset 0 0 0 1px rgb(218 250 255 / 0.22);
+      }
+
+      .cinema-control__label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.065em;
+        white-space: nowrap;
+      }
+
+      .loading-screen {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+        display: grid;
+        place-items: center;
+        padding: max(1.5rem, env(safe-area-inset-top)) max(1.5rem, env(safe-area-inset-right)) max(1.5rem, env(safe-area-inset-bottom)) max(1.5rem, env(safe-area-inset-left));
+        background:
+          radial-gradient(ellipse at center, rgb(23 73 84 / 0.18), transparent 42%),
+          #030507;
+        transition: opacity 620ms var(--ease-out), visibility 620ms step-end;
+      }
+
+      .cinema.is-ready .loading-screen {
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loading-content {
+        display: grid;
+        justify-items: center;
+        gap: 1.1rem;
+        text-align: center;
+      }
+
+      .loader-mark {
+        position: relative;
+        width: 3.55rem;
+        height: 3.55rem;
+        border: 1px solid rgb(152 228 241 / 0.16);
+        border-radius: 50%;
+        box-shadow: 0 0 44px rgb(56 194 219 / 0.16), inset 0 0 25px rgb(99 215 235 / 0.1);
+      }
+
+      .loader-mark::before,
+      .loader-mark::after {
+        position: absolute;
+        border-radius: inherit;
+        content: "";
+      }
+
+      .loader-mark::before {
+        inset: -1px;
+        border: 2px solid transparent;
+        border-top-color: #99e9f4;
+        border-right-color: rgb(117 217 235 / 0.4);
+      }
+
+      .loader-mark::after {
+        inset: 0.8rem;
+        border: 1px solid rgb(214 250 255 / 0.42);
+        box-shadow: 0 0 12px rgb(115 222 241 / 0.35);
+      }
+
+      .loading-label {
+        margin: 0;
+        color: #dff8fb;
+        font-size: 0.68rem;
+        font-weight: 750;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+
+      .loading-detail {
+        max-width: 20rem;
+        margin: -0.44rem 0 0;
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.45;
+      }
+
+      .orientation-note {
+        position: absolute;
+        z-index: 3;
+        top: max(1rem, env(safe-area-inset-top));
+        left: 50%;
+        display: none;
+        width: max-content;
+        max-width: calc(100% - 2rem);
+        padding: 0.48rem 0.78rem;
+        border: 1px solid rgb(207 240 248 / 0.17);
+        border-radius: 999px;
+        color: #cfe8ed;
+        background: rgb(5 11 14 / 0.68);
+        font-size: 0.72rem;
+        line-height: 1.3;
+        text-align: center;
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        transform: translateX(-50%);
+      }
+
+      @keyframes settle {
+        from { transform: scale(1.013) translateZ(0); }
+        to { transform: scale(1) translateZ(0); }
+      }
+
+      @media (orientation: portrait) and (max-width: 860px) {
+        .orientation-note {
+          display: block;
+        }
+
+        .watermark {
+          bottom: max(4.25rem, calc(env(safe-area-inset-bottom) + 2.85rem));
+        }
+      }
+
+      @media (min-width: 900px) and (min-aspect-ratio: 16 / 10) {
+        .player-shell {
+          inset: 1.1rem;
+          border: 1px solid rgb(186 235 245 / 0.13);
+          border-radius: 0.85rem;
+          box-shadow: 0 24px 80px rgb(0 0 0 / 0.46), 0 0 50px rgb(47 177 198 / 0.06);
+        }
+
+        .drive-player,
+        .player-shell::after {
+          border-radius: inherit;
+        }
+
+        .watermark {
+          bottom: 2.2rem;
+          left: 2.2rem;
+        }
+
+        .control-dock {
+          right: 2.15rem;
+          bottom: 2.1rem;
+        }
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        .watermark {
+          animation: watermark-float 4.8s ease-in-out infinite, watermark-glow 3.8s ease-in-out infinite;
+          will-change: transform, box-shadow;
+        }
+
+        .loader-mark::before {
+          animation: orbit 1.1s linear infinite;
+        }
+      }
+
+      @keyframes watermark-float {
+        0%, 100% { transform: translate3d(0, 0, 0); }
+        50% { transform: translate3d(0, -3px, 0); }
+      }
+
+      @keyframes watermark-glow {
+        0%, 100% { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.34), inset 0 -1px 0 rgb(83 202 225 / 0.17), 0 5px 24px rgb(24 174 203 / 0.18), 0 12px 35px rgb(0 0 0 / 0.28); }
+        50% { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.42), inset 0 -1px 0 rgb(83 202 225 / 0.28), 0 6px 29px rgb(66 207 231 / 0.31), 0 12px 35px rgb(0 0 0 / 0.28); }
+      }
+
+      @keyframes orbit {
+        to { transform: rotate(1turn); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      @media (prefers-reduced-transparency: reduce) {
+        .watermark,
+        .cinema-control,
+        .orientation-note {
+          background: #0a1519;
+          -webkit-backdrop-filter: none;
+          backdrop-filter: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main id="cinema" class="cinema" aria-label="HEYOGESH cinematic video player">
+      <section id="player-shell" class="player-shell" aria-label="Video player">
+        <!-- The iframe source is set from DRIVE_SHARE_URL below, so either a shared or embed Drive URL can be used. -->
+        <iframe
+          id="drive-player"
+          class="drive-player"
+          title="HEYOGESH video"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowfullscreen
+          referrerpolicy="strict-origin-when-cross-origin"
+          loading="eager"
+        ></iframe>
+      </section>
+
+      <div class="ambient-frame" aria-hidden="true"></div>
+
+      <div class="watermark" aria-label="HEYOGESH">
+        <span class="watermark__type">HEYOGESH</span>
+      </div>
+
+      <p id="orientation-note" class="orientation-note" aria-live="polite">
+        Rotate your device for the intended landscape view
+      </p>
+
+      <div class="control-dock" aria-label="Cinema controls">
+        <button id="cinema-button" class="cinema-control" type="button" aria-label="Enter cinema mode">
+          <span class="control-icon" aria-hidden="true"></span>
+          <span id="cinema-label" class="cinema-control__label">Enter cinema</span>
+        </button>
+      </div>
+
+      <div id="loading-screen" class="loading-screen" role="status" aria-live="polite">
+        <div class="loading-content">
+          <div class="loader-mark" aria-hidden="true"></div>
+          <p id="loading-label" class="loading-label">Preparing the picture</p>
+          <p id="loading-detail" class="loading-detail">Connecting to the secure video player</p>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      (() => {
+        "use strict";
+
+        // Paste any normal Google Drive sharing URL here. The function below converts it to the preview embed URL.
+        const DRIVE_SHARE_URL = "https://drive.google.com/file/d/1oqooJeE7iPuCN1j_lb-JyzNwcEjhkogA/view?usp=sharing";
+
+        const cinema = document.getElementById("cinema");
+        const playerShell = document.getElementById("player-shell");
+        const player = document.getElementById("drive-player");
+        const cinemaButton = document.getElementById("cinema-button");
+        const cinemaLabel = document.getElementById("cinema-label");
+        const loadingLabel = document.getElementById("loading-label");
+        const loadingDetail = document.getElementById("loading-detail");
+
+        /**
+         * Turns these Drive forms into the official preview embed form:
+         * /file/d/FILE_ID/view, /file/d/FILE_ID/preview, and /open?id=FILE_ID.
+         */
+        function toDriveEmbedUrl(url) {
+          try {
+            const parsed = new URL(url);
+            const pathId = parsed.pathname.match(/\/file\/d\/([^/]+)/)?.[1];
+            const queryId = parsed.searchParams.get("id");
+            const fileId = pathId || queryId;
+
+            if (!fileId) {
+              throw new Error("A Google Drive file ID could not be found.");
+            }
+
+            return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
+          } catch (error) {
+            console.error("Invalid Google Drive sharing URL:", error);
+            return "";
+          }
+        }
+
+        function setViewportHeight() {
+          const viewportHeight = window.visualViewport?.height || window.innerHeight;
+          document.documentElement.style.setProperty("--app-height", `${Math.round(viewportHeight)}px`);
+        }
+
+        let viewportFrame = 0;
+        function scheduleViewportHeight() {
+          if (viewportFrame) return;
+          viewportFrame = requestAnimationFrame(() => {
+            viewportFrame = 0;
+            setViewportHeight();
+          });
+        }
+
+        function updateFullscreenUI() {
+          const isFullscreen = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+          cinema.classList.toggle("is-fullscreen", isFullscreen);
+          cinemaButton.setAttribute("aria-label", isFullscreen ? "Exit cinema mode" : "Enter cinema mode");
+          cinemaLabel.textContent = isFullscreen ? "Exit cinema" : "Enter cinema";
+
+          if (!isFullscreen && screen.orientation?.unlock) {
+            screen.orientation.unlock();
+          }
+        }
+
+        async function lockLandscapeIfPossible() {
+          // Orientation locking commonly requires fullscreen and is not supported by iPhone Safari.
+          if (!screen.orientation?.lock) return;
+
+          try {
+            await screen.orientation.lock("landscape");
+          } catch (_) {
+            // Browser/device policy decides whether orientation can be locked. The layout remains immersive either way.
+          }
+        }
+
+        async function toggleCinemaMode() {
+          const isFullscreen = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+
+          try {
+            if (isFullscreen) {
+              if (document.exitFullscreen) {
+                await document.exitFullscreen();
+              } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+              }
+              return;
+            }
+
+            // This is intentionally invoked only from a button/key gesture. Browsers reject automatic fullscreen requests.
+            if (playerShell.requestFullscreen) {
+              await playerShell.requestFullscreen({ navigationUI: "hide" });
+            } else if (playerShell.webkitRequestFullscreen) {
+              playerShell.webkitRequestFullscreen();
+            } else {
+              throw new Error("Fullscreen is not available in this browser.");
+            }
+
+            await lockLandscapeIfPossible();
+          } catch (error) {
+            cinemaButton.setAttribute("aria-label", "Cinema mode requires a browser gesture or is unavailable");
+            cinemaLabel.textContent = "Browser view";
+            console.info("Fullscreen was not granted:", error);
+          }
+        }
+
+        let playerLoaded = false;
+        let loadTimer = 0;
+
+        function markPlayerReady() {
+          playerLoaded = true;
+          window.clearTimeout(loadTimer);
+          window.setTimeout(() => {
+            cinema.classList.add("is-ready");
+            loadingLabel.textContent = "Picture ready";
+            loadingDetail.textContent = "Use the player controls if your browser blocks autoplay.";
+          }, 220);
+        }
+
+        function showEmbedError() {
+          loadingLabel.textContent = "Video unavailable";
+          loadingDetail.textContent = "Confirm that the Google Drive file is shared with anyone who has the link, then refresh.";
+        }
+
+        setViewportHeight();
+        window.addEventListener("resize", scheduleViewportHeight, { passive: true });
+        window.visualViewport?.addEventListener("resize", scheduleViewportHeight, { passive: true });
+        window.visualViewport?.addEventListener("scroll", scheduleViewportHeight, { passive: true });
+
+        document.addEventListener("fullscreenchange", updateFullscreenUI);
+        document.addEventListener("webkitfullscreenchange", updateFullscreenUI);
+        cinemaButton.addEventListener("click", toggleCinemaMode);
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key.toLowerCase() === "f" && !event.metaKey && !event.ctrlKey && !event.altKey) {
+            event.preventDefault();
+            toggleCinemaMode();
+          }
+        });
+
+        // Browsers intentionally do not expose reliable iframe error events, so keep the loading state useful on slow networks.
+        player.addEventListener("load", markPlayerReady, { once: true });
+
+        const embedUrl = toDriveEmbedUrl(DRIVE_SHARE_URL);
+        if (embedUrl) {
+          /*
+           * "allow=autoplay" delegates the iframe permission, but Google Drive owns the media element.
+           * Its player is cross-origin, so this page cannot call play(), mute it, or observe playback state.
+           */
+          loadTimer = window.setTimeout(() => {
+            if (!playerLoaded) {
+              loadingLabel.textContent = "Still connecting";
+              loadingDetail.textContent = "Check your connection. The video must also be shared with anyone who has the link.";
+            }
+          }, 8000);
+          player.src = embedUrl;
+        } else {
+          showEmbedError();
+        }
+      })();
+    </script>
+  </body>
+</html>
