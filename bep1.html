@@ -54,6 +54,7 @@
       place-items: center;
       width: 100vw;
       height: 100vh;
+      height: 100svh;
       height: 100dvh;
       overflow: hidden;
       isolation: isolate;
@@ -83,7 +84,7 @@
     /* Used only when Google rejects a direct cross-site media request. */
     .drive-fallback {
       position: absolute;
-      z-index: 2;
+      z-index: 10;
       inset: 0;
       width: 100%;
       height: 100%;
@@ -92,8 +93,47 @@
     }
 
     .drive-fallback[hidden] { display: none; }
+    /* Drive is a replacement player, never a layer over the custom player. */
+    .player.using-drive video,
     .player.using-drive .controls,
-    .player.using-drive .scrim { display: none; }
+    .player.using-drive .scrim,
+    .player.using-drive .center-status,
+    .player.using-drive .start-overlay,
+    .player.using-drive .error-card { display: none; }
+
+    .start-overlay {
+      position: absolute;
+      z-index: 6;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+      background: radial-gradient(ellipse at center, rgba(18, 54, 76, 0.28), rgba(2, 6, 11, 0.72) 68%);
+      transition: opacity 180ms ease, visibility 180ms ease;
+    }
+
+    .player:not(.is-awaiting-start) .start-overlay {
+      visibility: hidden;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .start-button {
+      min-height: 52px;
+      padding: 0 20px;
+      color: #031018;
+      font-weight: 760;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      border: 0;
+      border-radius: 999px;
+      background: #c8f2ff;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.42), inset 0 1px rgba(255, 255, 255, 0.72);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .start-button:active { transform: scale(0.97); }
+    .start-button:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
 
     .scrim {
       position: absolute;
@@ -341,7 +381,7 @@
 </head>
 
 <body>
-  <main class="player controls-visible" id="player" aria-label="Custom video player">
+  <main class="player is-awaiting-start" id="player" aria-label="Custom video player">
     <!-- Public Drive download endpoint: CORS-enabled and range-capable at time of implementation. -->
     <video
       id="video"
@@ -365,7 +405,11 @@
     ></iframe>
 
     <div class="scrim" aria-hidden="true"></div>
-    <div class="center-status loading show" id="center-status" aria-live="polite"><span>▶</span></div>
+    <div class="center-status loading" id="center-status" aria-live="polite"><span>▶</span></div>
+
+    <div class="start-overlay" id="start-overlay">
+      <button class="start-button" id="start" type="button">Tap to play fullscreen</button>
+    </div>
 
     <section class="controls" aria-label="Video controls">
       <div class="timeline-wrap">
@@ -400,6 +444,8 @@
 
       const player = document.getElementById("player");
       const video = document.getElementById("video");
+      const startOverlay = document.getElementById("start-overlay");
+      const startButton = document.getElementById("start");
       const seek = document.getElementById("seek");
       const playButton = document.getElementById("play");
       const playIcon = document.getElementById("play-icon");
@@ -416,7 +462,6 @@
       let seeking = false;
       let touchStart = null;
       let lastTap = 0;
-      let autoplayTried = false;
 
       const icons = {
         play: '<path d="M8 5.3v13.4a1 1 0 0 0 1.52.86l10.1-6.7a1.03 1.03 0 0 0 0-1.72L9.52 4.44A1 1 0 0 0 8 5.3Z"/>',
@@ -468,6 +513,10 @@
 
       const setBuffering = (buffering) => {
         window.clearTimeout(statusTimer);
+        if (player.classList.contains("is-awaiting-start")) {
+          status.classList.remove("loading", "show");
+          return;
+        }
         if (buffering) {
           status.classList.add("loading", "show");
         } else {
@@ -490,7 +539,41 @@
         revealControls();
       };
 
+      const requestImmersiveFullscreen = async () => {
+        if (document.fullscreenElement || document.webkitFullscreenElement || video.webkitDisplayingFullscreen) return;
+        try {
+          // iPhone Safari exposes fullscreen on the video element rather than the page.
+          if (typeof video.webkitEnterFullscreen === "function") {
+            video.webkitEnterFullscreen();
+            return;
+          }
+          await (player.requestFullscreen?.() || player.webkitRequestFullscreen?.());
+        } catch (_) {
+          // The player already occupies the complete visual viewport.
+        }
+      };
+
+      const startImmersivePlayback = async () => {
+        if (player.classList.contains("using-drive")) return;
+        player.classList.remove("is-awaiting-start");
+        startOverlay.setAttribute("aria-hidden", "true");
+        // Both calls are intentionally made from this user gesture. Browsers reject
+        // fullscreen requests made later, after an awaited promise.
+        void requestImmersiveFullscreen();
+        try {
+          await video.play();
+        } catch (_) {
+          player.classList.add("is-awaiting-start");
+          startOverlay.removeAttribute("aria-hidden");
+          revealControls();
+        }
+      };
+
       const togglePlayback = async () => {
+        if (player.classList.contains("is-awaiting-start")) {
+          await startImmersivePlayback();
+          return;
+        }
         if (video.paused) {
           try { await video.play(); } catch (_) { revealControls(); }
         } else {
@@ -498,29 +581,14 @@
         }
       };
 
-      // Try sound first. If policy blocks it, retry muted without asking for a tap.
-      const attemptAutoplay = async () => {
-        if (autoplayTried) return;
-        autoplayTried = true;
-        try {
-          await video.play();
-        } catch (_) {
-          try {
-            video.muted = true;
-            updateVolumeUI();
-            await video.play();
-          } catch (_) {
-            // The visible play button remains the standards-compliant fallback.
-          }
-        }
-      };
-
       const toggleFullscreen = async () => {
         try {
-          if (document.fullscreenElement || document.webkitFullscreenElement) {
+          if (video.webkitDisplayingFullscreen && typeof video.webkitExitFullscreen === "function") {
+            video.webkitExitFullscreen();
+          } else if (document.fullscreenElement || document.webkitFullscreenElement) {
             await (document.exitFullscreen?.() || document.webkitExitFullscreen?.());
           } else {
-            await (player.requestFullscreen?.() || player.webkitRequestFullscreen?.());
+            await requestImmersiveFullscreen();
           }
         } catch (_) { /* Fullscreen can be denied by browser policy. */ }
       };
@@ -532,17 +600,19 @@
         video.pause();
         video.removeAttribute("src");
         video.load();
+        window.clearTimeout(controlsTimer);
         setBuffering(false);
         errorCard.classList.remove("is-visible");
-        player.classList.add("using-drive");
-        driveFallback.src = driveFallback.dataset.src;
+        player.classList.remove("is-awaiting-start", "controls-visible");
+        startOverlay.setAttribute("aria-hidden", "true");
         driveFallback.hidden = false;
+        driveFallback.src = driveFallback.dataset.src;
+        player.classList.add("using-drive");
       };
 
       video.addEventListener("loadedmetadata", () => {
         seek.max = video.duration;
         updateTimeline();
-        attemptAutoplay();
       });
       video.addEventListener("durationchange", updateTimeline);
       video.addEventListener("timeupdate", updateTimeline);
@@ -556,6 +626,7 @@
       video.addEventListener("volumechange", updateVolumeUI);
       video.addEventListener("error", useDriveFallback);
 
+      startButton.addEventListener("click", (event) => { event.stopPropagation(); startImmersivePlayback(); });
       playButton.addEventListener("click", (event) => { event.stopPropagation(); togglePlayback(); });
       muteButton.addEventListener("click", (event) => { event.stopPropagation(); video.muted = !video.muted; if (!video.muted && video.volume === 0) video.volume = 1; });
       fullscreen.addEventListener("click", (event) => { event.stopPropagation(); toggleFullscreen(); });
@@ -622,6 +693,8 @@
 
       document.addEventListener("fullscreenchange", revealControls);
       document.addEventListener("webkitfullscreenchange", revealControls);
+      video.addEventListener("webkitbeginfullscreen", () => player.classList.remove("is-awaiting-start"));
+      video.addEventListener("webkitendfullscreen", revealControls);
       updatePlayUI();
       updateVolumeUI();
       updateTimeline();
