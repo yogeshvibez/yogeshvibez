@@ -1,0 +1,9 @@
+<resources>
+    <color name="ink">#0C1424</color>
+    <color name="paper">#F5F7FB</color>
+    <color name="cobalt">#2457D6</color>
+    <color name="cobalt_dark">#183B99</color>
+    <color name="slate">#667085</color>
+    <color name="line">#D7DEEA</color>
+    <color name="danger">#B42318</color>
+</resources>

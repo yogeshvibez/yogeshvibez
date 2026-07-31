@@ -1,0 +1,17 @@
+{
+  "name": "heyogesh-drive-host",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Secure Node.js storage host for Heyogesh Drive",
+  "main": "host_index.js",
+  "scripts": {
+    "start": "node host_index.js",
+    "check": "node --check host_index.js"
+  },
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "dependencies": {
+    "archiver": "^8.0.0"
+  }
+}

@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Heyogesh Drive</string>
+    <string name="channel_downloads">Drive downloads</string>
+    <string name="channel_downloads_description">Progress for Heyogesh Drive downloads</string>
+</resources>

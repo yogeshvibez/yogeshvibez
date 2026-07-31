@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_search"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="Search"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        app:showAsAction="ifRoom|collapseActionView" />
+    <item android:id="@+id/action_sort" android:title="Sort" app:showAsAction="never" />
+    <item android:id="@+id/action_view" android:title="Grid view" app:showAsAction="never" />
+    <item android:id="@+id/action_download" android:title="Download selection" app:showAsAction="ifRoom" />
+    <item android:id="@+id/action_downloads" android:title="Downloads" app:showAsAction="never" />
+    <item android:id="@+id/action_sign_out" android:title="Sign out" app:showAsAction="never" />
+</menu>

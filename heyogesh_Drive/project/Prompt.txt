@@ -1,0 +1,444 @@
+This prompt for previous codex, but hes limit reached and cant finish the work, as the succsesor of previous codex complete this project everything you need is here maybe some code half completed.
+
+"""# Heyogesh Drive - Complete Project Specification
+
+Take your time before writing any code.
+
+This is a complex project. Do NOT rush, simplify, or generate short placeholder code.
+
+I want production-quality code with proper architecture, comments, error handling, responsive UI, and clean organization.
+
+Write complete implementations instead of TODOs or mock examples.
+
+------------------------------------------------------------
+PROJECT STRUCTURE
+------------------------------------------------------------
+
+Create a folder named:
+
+Project/
+
+Inside it create:
+
+Project/
+│
+├── index.html
+├── host_index.js
+├── README.md
+└── Android App Source Code
+    └── Build final APK:
+        Heyogesh_Drive.apk
+
+------------------------------------------------------------
+PROJECT GOAL
+------------------------------------------------------------
+
+Build my own cloud storage system.
+
+The Windows Documents folder will become the storage server.
+
+Android users can connect to it through my custom domain.
+
+Users can:
+
+• Browse folders
+• Browse files
+• Stream videos
+• View images
+• Download files
+• Download entire folders
+• Select multiple items
+• Download multiple items together
+
+------------------------------------------------------------
+WINDOWS STORAGE SERVER
+------------------------------------------------------------
+
+The storage root is:
+
+Windows Documents Folder
+
+Everything inside Documents must be accessible from the Android app.
+
+Supported visible file types include:
+
+• mp4
+• mkv
+• avi
+• mov
+• webm
+• m4v
+• mp3
+• wav
+• flac
+• jpg
+• jpeg
+• png
+• gif
+• webp
+• apk
+
+Any supported media should appear automatically.
+
+------------------------------------------------------------
+ANDROID APPLICATION
+------------------------------------------------------------
+
+App Name:
+
+Heyogesh Drive
+
+Before the main storage page opens:
+
+Display a password/API screen.
+
+Password:
+
+2608
+
+When user enters:
+
+2608
+
+The application sends this password to:
+
+protocol://storage.heyogesh.dpdns.org
+
+If authentication succeeds:
+
+Open storage.
+
+If authentication fails:
+
+Show proper error message.
+
+------------------------------------------------------------
+SERVER DOMAIN
+------------------------------------------------------------
+
+The storage server runs from:
+
+storage.heyogesh.dpdns.org
+
+I use Cloudflare Zero Trust Tunnel.
+
+My tunnel token is:
+
+cloudflared.exe service install [REDACTED_SECRET]
+
+Do NOT remove this token.
+
+In README.md explain:
+
+• Which Cloudflare protocol should be used
+• Why that protocol is best
+• How to configure it
+• How to deploy host_index.js
+• How to expose it publicly
+• Why the selected protocol is the best option for this project
+
+Cloudflare supports:
+
+• HTTP
+• HTTPS
+• TCP
+• SSH
+• UNIX
+• RDP
+• etc.
+
+Choose the best protocol for this storage application and explain the reasoning in detail.
+
+------------------------------------------------------------
+NODE SERVER
+------------------------------------------------------------
+
+host_index.js must use Node.js.
+
+Responsibilities:
+
+• Authenticate requests
+• Verify password
+• Read Windows Documents folder
+• Read nested folders
+• Return folder tree
+• Return file metadata
+• Stream videos
+• Stream audio
+• Return image files
+• Support folder navigation
+• Support multiple downloads
+• Support whole-folder downloads
+• Compress folders automatically before downloading
+• Support download progress
+• Return download speed
+• Return remaining time
+• Proper error handling
+• Secure API structure
+• Well-commented production-quality code
+
+------------------------------------------------------------
+ANDROID APP FEATURES
+------------------------------------------------------------
+
+The application should have a polished Material Design UI.
+
+Features:
+
+✔ Login screen
+
+✔ Password field
+
+✔ Remember session
+
+✔ Folder browser
+
+✔ Breadcrumb navigation
+
+✔ Icons for every file type
+
+✔ Grid/List toggle
+
+✔ Search
+
+✔ Sorting
+
+✔ Folder opening animation
+
+✔ Loading animations
+
+✔ Pull to refresh
+
+✔ Empty state
+
+✔ Error state
+
+✔ Offline handling
+
+✔ Retry buttons
+
+------------------------------------------------------------
+MEDIA STREAMING
+------------------------------------------------------------
+
+Very important.
+
+Files should NOT download before opening.
+
+Example:
+
+User taps:
+
+movie.mkv
+
+The app should immediately stream the file directly from the server URL.
+
+The Android system should open:
+
+Default video player
+
+or
+
+Any installed media player.
+
+Streaming should happen directly over the server URL.
+
+Same behavior for:
+
+Images
+
+User taps image.
+
+Image opens instantly.
+
+No download required.
+
+------------------------------------------------------------
+DOWNLOADS
+------------------------------------------------------------
+
+If user presses and holds any item for 5 seconds:
+
+Start downloading.
+
+Supported:
+
+Single file
+
+Entire folder
+
+Show download screen.
+
+Include:
+
+Animated progress bar
+
+Remaining time
+
+Download speed
+
+Percentage
+
+Pause
+
+Resume
+
+Cancel
+
+Notification progress
+
+Downloads save into Android's default Downloads folder.
+
+------------------------------------------------------------
+MULTI-SELECTION
+------------------------------------------------------------
+
+Users can:
+
+Select multiple files
+
+Select multiple folders
+
+When selection starts:
+
+Display a top navigation bar.
+
+Show:
+
+Download button
+
+After pressing Download:
+
+Display download manager screen.
+
+Each download should display:
+
+Progress
+
+Speed
+
+ETA
+
+Current file
+
+Completed files
+
+------------------------------------------------------------
+LANDING PAGE
+------------------------------------------------------------
+
+Create:
+
+index.html
+
+Single-file HTML.
+
+Use only:
+
+HTML
+
+CSS
+
+JavaScript
+
+No frameworks.
+
+Purpose:
+
+Landing page for downloading:
+
+Heyogesh_Drive.apk
+
+Requirements:
+
+Minimal design
+
+Modern UI
+
+Responsive
+
+Smooth animations
+
+Glassmorphism or clean modern appearance
+
+Large download button
+
+Feature cards
+
+Footer
+
+------------------------------------------------------------
+GITHUB
+------------------------------------------------------------
+
+Create GitHub repository:
+
+Heyogesh-App
+
+Repository root:
+
+index.html
+
+Heyogesh_Drive.apk
+
+The landing page download button must point to:
+
+Heyogesh_Drive.apk
+
+stored inside the same repository.
+
+------------------------------------------------------------
+README
+------------------------------------------------------------
+
+README.md should include:
+
+Project overview
+
+Architecture diagram
+
+Installation
+
+How to run host_index.js
+
+How to build APK
+
+Cloudflare Tunnel setup
+
+Why the selected protocol is recommended
+
+Security explanation
+
+Folder structure
+
+Future improvements
+
+------------------------------------------------------------
+CODE QUALITY
+------------------------------------------------------------
+
+Do NOT generate placeholder code.
+
+Do NOT skip implementations.
+
+Write complete code.
+
+Add comments.
+
+Use modular architecture.
+
+Optimize performance.
+
+Handle large folders efficiently.
+
+Support nested directories.
+
+Implement proper streaming.
+
+Implement proper downloads.
+
+Use production-quality practices.
+
+Think carefully before writing any code.
+
+Take your time and build this project correctly from start to finish."""
